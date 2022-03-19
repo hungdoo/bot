@@ -90,11 +90,11 @@ func (c *ContractCommand) Execute(noCondition bool) (string, error) {
 		}
 		valueDecimal := decimal.NewFromBigInt(value, 0)
 		if noCondition {
-			return fmt.Sprintf("<strong>V:%v</strong>", valueDecimal.DivRound(decimal.New(1, int32(precision)), 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v</strong>", c.Name, valueDecimal.DivRound(decimal.New(1, int32(precision)), 2)), nil
 		} else if valueDecimal.GreaterThan(c.high) || valueDecimal.LessThan(c.low) {
 			c.high = valueDecimal.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 			c.low = valueDecimal.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-			return fmt.Sprintf("<strong>V:%v | L:%v | H:%v</strong>", valueDecimal.DivRound(decimal.New(1, int32(precision)), 2), c.low.DivRound(decimal.New(1, int32(precision)), 2), c.high.DivRound(decimal.New(1, int32(precision)), 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v | L:%v | H:%v</strong>", c.Name, valueDecimal.DivRound(decimal.New(1, int32(precision)), 2), c.low.DivRound(decimal.New(1, int32(precision)), 2), c.high.DivRound(decimal.New(1, int32(precision)), 2)), nil
 		}
 	} else {
 		return "", fmt.Errorf("cannot parse value [%v]", values...)

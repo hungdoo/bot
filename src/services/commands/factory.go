@@ -25,8 +25,7 @@ func (c *CommandFactory) Add(messages []string) string {
 		}
 		return fmt.Sprintf("Command [%v] updated", name)
 	} else {
-		switch name {
-		case "callContract":
+		if strings.HasPrefix(name, "callContract") {
 			newCommand := &contract.ContractCommand{
 				Command: types.Command{
 					Name:     name,
@@ -39,9 +38,8 @@ func (c *CommandFactory) Add(messages []string) string {
 				return err.Error()
 			}
 			c.commands[name] = newCommand
-		default:
-			return fmt.Sprintf("Invalid Command [%v] added", name)
 		}
+
 		return fmt.Sprintf("Command [%v] added", name)
 	}
 }
