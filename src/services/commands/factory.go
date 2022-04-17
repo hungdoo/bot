@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hungdoo/bot/src/packages/contract"
+	"github.com/hungdoo/bot/src/packages/debank"
 	"github.com/hungdoo/bot/src/types"
 )
 
@@ -27,6 +28,19 @@ func (c *CommandFactory) Add(messages []string) string {
 	} else {
 		if strings.HasPrefix(name, "callContract") {
 			newCommand := &contract.ContractCommand{
+				Command: types.Command{
+					Name:     name,
+					Data:     data,
+					Enabled:  true,
+					IdleTime: time.Second * 20,
+				},
+			}
+			if err := newCommand.SetData(data); err != nil {
+				return err.Error()
+			}
+			c.commands[name] = newCommand
+		} else if strings.HasPrefix(name, "debank") {
+			newCommand := &debank.Command{
 				Command: types.Command{
 					Name:     name,
 					Data:     data,
