@@ -17,6 +17,7 @@ type ContractCommand struct {
 	types.Command
 	low  decimal.Decimal
 	high decimal.Decimal
+	prev decimal.Decimal
 }
 
 func (c *ContractCommand) Validate(data []string) error {
@@ -90,11 +91,12 @@ func (c *ContractCommand) Execute(noCondition bool) (string, error) {
 		}
 		valueDecimal := decimal.NewFromBigInt(value, 0)
 		if noCondition {
-			return fmt.Sprintf("%v\n<strong>V:%v</strong>", c.Name, valueDecimal.DivRound(decimal.New(1, int32(precision)), 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v</strong>", c.Name, u.ShortenDecimal(valueDecimal, int32(precision), 2), u.ShortenDecimal(c.prev, int32(precision), 2)), nil
 		} else if valueDecimal.GreaterThan(c.high) || valueDecimal.LessThan(c.low) {
+			c.prev = valueDecimal
 			c.high = valueDecimal.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 			c.low = valueDecimal.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-			return fmt.Sprintf("%v\n<strong>V:%v | L:%v | H:%v</strong>", c.Name, valueDecimal.DivRound(decimal.New(1, int32(precision)), 2), c.low.DivRound(decimal.New(1, int32(precision)), 2), c.high.DivRound(decimal.New(1, int32(precision)), 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v | L:%v | H:%v</strong>", c.Name, u.ShortenDecimal(valueDecimal, int32(precision), 2), u.ShortenDecimal(c.prev, int32(precision), 2), u.ShortenDecimal(c.low, int32(precision), 2), u.ShortenDecimal(c.high, int32(precision), 2)), nil
 		}
 	} else {
 		return "", fmt.Errorf("cannot parse value [%v]", values...)
