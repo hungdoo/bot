@@ -7,8 +7,8 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hungdoo/bot/src/packages/interfaces"
+	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/telegram"
-	u "github.com/hungdoo/bot/src/packages/utils"
 )
 
 type CommandService struct {
@@ -19,7 +19,7 @@ type CommandService struct {
 
 func (c *CommandService) process(message string) string {
 	ret := "No action"
-	messages := strings.Split(strings.ToLower(strings.TrimSpace(message)), " ")
+	messages := strings.Split(strings.TrimSpace(message), " ")
 	if len(messages) > 0 {
 		switch messages[0] {
 		case "add":
@@ -64,7 +64,7 @@ func (c *CommandService) process(message string) string {
 	} else {
 		ret = "Empty message"
 	}
-	u.GeneralLogger.Printf("Process message[%s] & ret[%s]\n", message, ret)
+	log.GeneralLogger.Printf("Process message[%s] & ret[%s]\n", message, ret)
 	return ret
 }
 
@@ -73,14 +73,14 @@ func (c *CommandService) Work() {
 	for {
 		jobs, err := c.Factory.GetJobs()
 		if err != nil {
-			u.GeneralLogger.Printf("GetJobs err: [%s]", err)
+			log.GeneralLogger.Printf("GetJobs err: [%s]", err)
 		}
 		for _, j := range jobs {
 			if !j.IsIdle() {
 				result, err := j.Execute(false)
 				j.SetExecutedTime(time.Now())
 				if err != nil {
-					u.GeneralLogger.Printf("Job [%s] execution err: [%s]", j.GetName(), err)
+					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
 					continue
 				}
 				if result != "" {
@@ -104,7 +104,7 @@ func (c *CommandService) Run() error {
 			continue
 		}
 
-		u.GeneralLogger.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		log.GeneralLogger.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, c.process(update.Message.Text))
 		msg.ReplyToMessageID = update.Message.MessageID
 		msg.ParseMode = "HTML"

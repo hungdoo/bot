@@ -11,7 +11,7 @@ import (
 	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/debank"
 	"github.com/hungdoo/bot/src/packages/interfaces"
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/log"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -166,7 +166,7 @@ func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
 				}
 			}
 			c.commands[cmd.GetName()] = _command
-			u.GeneralLogger.Printf("Loaded Command [%v]\n", _command.GetName())
+			log.GeneralLogger.Printf("Loaded Command [%v]\n", _command.GetName())
 		}
 	}
 

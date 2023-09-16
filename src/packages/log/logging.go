@@ -1,4 +1,4 @@
-package utils
+package log
 
 import (
 	"log"
@@ -23,6 +23,6 @@ func init() {
 	// 	os.Exit(1)
 	// }
 	generalLog := os.Stdout
-	GeneralLogger = log.New(generalLog, "General:\t", log.Ldate|log.Lshortfile)
-	ErrorLogger = log.New(generalLog, "Error:\t", log.Ldate|log.Lshortfile)
+	GeneralLogger = log.New(generalLog, "[General] ", log.Lshortfile|log.Lmsgprefix)
+	ErrorLogger = log.New(generalLog, "[Error] ", log.Lshortfile|log.Lmsgprefix)
 }

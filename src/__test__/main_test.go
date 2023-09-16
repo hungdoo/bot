@@ -6,7 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/dotenv"
+	"github.com/hungdoo/bot/src/packages/log"
 )
 
 func init() {
@@ -16,12 +17,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	u.InitEnv()
+	dotenv.InitEnv()
 }
 
 func TestMain(m *testing.M) {
-	u.GeneralLogger.Println("Init tests!")
+	log.GeneralLogger.Println("Init tests!")
 	runTests := m.Run()
-	u.GeneralLogger.Println("Done tests!")
+	log.GeneralLogger.Println("Done tests!")
 	os.Exit(runTests)
 }

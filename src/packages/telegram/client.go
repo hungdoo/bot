@@ -5,7 +5,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/dotenv"
 )
 
 var _bot *tgbotapi.BotAPI
@@ -13,7 +13,7 @@ var _updates tgbotapi.UpdatesChannel
 
 func GetBot() *tgbotapi.BotAPI {
 	if _bot == nil {
-		bot, err := tgbotapi.NewBotAPI(u.BotEnvs["BOT_TELEGRAM_TOKEN"])
+		bot, err := tgbotapi.NewBotAPI(dotenv.BotEnvs["BOT_TELEGRAM_TOKEN"])
 		if err != nil {
 			fmt.Printf("%v\n", err.Error())
 			return nil

@@ -1,11 +1,11 @@
-package utils
+package dotenv
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/joho/godotenv"
 )
 
@@ -27,11 +27,11 @@ func InitEnv() {
 	var err error
 	BotEnvs, err = godotenv.Read(envPath)
 	if err != nil {
-		log.Fatalf("Error loading %s file: %s", envPath, err)
+		log.GeneralLogger.Fatalf("Error loading %s file: %s", envPath, err)
 	}
 
 	for k, v := range BotEnvs {
-		GeneralLogger.Printf("%s:%s\n", k, v)
+		log.GeneralLogger.Printf("%s:%s\n", k, v)
 	}
 }
 

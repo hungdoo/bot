@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/hungdoo/bot/src/packages/db"
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/dotenv"
 	"github.com/hungdoo/bot/src/services/commands"
 )
 
 func main() {
-	u.InitEnv()
+	dotenv.InitEnv()
 
 	_db := db.GetDb()
 	defer _db.Close()

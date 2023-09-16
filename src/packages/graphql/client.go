@@ -3,7 +3,7 @@ package graphql
 import (
 	"context"
 
-	"github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/dotenv"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
 )
@@ -19,10 +19,10 @@ func GetClient() *Client {
 		return client
 	}
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: utils.BotEnvs["BOT_GRAPHQL_TOKEN"]},
+		&oauth2.Token{AccessToken: dotenv.BotEnvs["BOT_GRAPHQL_TOKEN"]},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
-	client = &Client{graphql.NewClient(utils.BotEnvs["BOT_VENUS_SUBGRAPH"], httpClient)}
+	client = &Client{graphql.NewClient(dotenv.BotEnvs["BOT_VENUS_SUBGRAPH"], httpClient)}
 	return client
 }

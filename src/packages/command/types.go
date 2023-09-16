@@ -23,7 +23,7 @@ func (s *CommandType) String() string {
 
 func IsType(name string) CommandType {
 	for i := ContractCall; i < Debank; i++ {
-		if strings.HasPrefix(name, i.String()) {
+		if strings.HasPrefix(strings.ToLower(name), i.String()) {
 			return i
 		}
 	}

@@ -3,7 +3,8 @@ package db
 import (
 	"context"
 
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/dotenv"
+	"github.com/hungdoo/bot/src/packages/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,7 +17,7 @@ type MongoDB struct {
 
 func newMongoDB() (*MongoDB, error) {
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://" + u.GetEnv("DBHost") + ":" + u.GetEnv("DBPort"))
+	clientOptions := options.Client().ApplyURI("mongodb://" + dotenv.GetEnv("DBHost") + ":" + dotenv.GetEnv("DBPort"))
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -30,16 +31,16 @@ func newMongoDB() (*MongoDB, error) {
 		return nil, err
 	}
 
-	u.GeneralLogger.Printf("MongoDB Connected to: %s\n", clientOptions.GetURI())
+	log.GeneralLogger.Printf("MongoDB Connected to: %s\n", clientOptions.GetURI())
 	return &MongoDB{Client: client}, nil
 }
 
 func (db *MongoDB) Close() {
-	u.GeneralLogger.Println("MongoDB Closed")
+	log.GeneralLogger.Println("MongoDB Closed")
 	db.Client.Disconnect(context.TODO())
 }
 func (db *MongoDB) GetCollection(coll string) *mongo.Collection {
-	return db.Client.Database(u.GetEnv("DBName")).Collection(coll)
+	return db.Client.Database(dotenv.GetEnv("DBName")).Collection(coll)
 }
 
 // Manipulate
@@ -76,7 +77,7 @@ func GetDb() *MongoDB {
 	var err error
 	_db, err = newMongoDB()
 	if err != nil {
-		u.ErrorLogger.Fatal(err)
+		log.ErrorLogger.Fatal(err)
 	}
 	return _db
 }

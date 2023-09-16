@@ -10,7 +10,6 @@ import (
 	"github.com/alethio/web3-go/ethrpc"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/hungdoo/bot/src/packages/utils"
 )
 
 func TestConntractCall(t *testing.T) {
@@ -52,7 +51,7 @@ func TestExampleViewCall(t *testing.T) {
 		panic(err)
 	}
 
-	vc := utils.NewViewCall(
+	vc := NewViewCall(
 		"getUserAccountData(address)(uint256,uint256,uint256,uint256,uint256,uint256)",
 		[]interface{}{"0x9BD3e72f2F1CA05Ad8D4489ec870Bf2478b10397"},
 	)
@@ -86,7 +85,7 @@ func TestExampleViewCallEth(t *testing.T) {
 		panic(err)
 	}
 
-	vc := utils.NewViewCall(
+	vc := NewViewCall(
 		"getAmountOut(uint256,address,address)(uint256,bool)",
 		[]interface{}{"1000000000000000000000", "0x777172D858dC1599914a1C4c6c9fC48c99a60990", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"},
 	)

@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/hungdoo/bot/src/packages/command"
-	u "github.com/hungdoo/bot/src/packages/utils"
+	"github.com/hungdoo/bot/src/packages/log"
+	"github.com/hungdoo/bot/src/packages/math"
 	"github.com/shopspring/decimal"
 )
 
@@ -29,7 +30,7 @@ func (c *Command) SetData(newValue []string) error {
 
 func (c *Command) Execute(noCondition bool) (string, error) {
 	userAddr, offsetStr := c.Data[0], c.Data[1]
-	u.GeneralLogger.Printf("[%s] Execute: [%v]", c.GetName(), c.Data)
+	log.GeneralLogger.Printf("[%s] Execute: [%v]", c.GetName(), c.Data)
 
 	debt, err := GetDebt(userAddr)
 	if err != nil {
@@ -42,16 +43,16 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 	}
 
 	if debt.IsPositive() {
-		u.GeneralLogger.Printf("[%s] execution result: [%s]", c.GetName(), debt)
+		log.GeneralLogger.Printf("[%s] execution result: [%s]", c.GetName(), debt)
 		if !offset.IsPositive() {
 			offset = decimal.NewFromInt(50000)
 		}
 		_prev := c.prev
 		if noCondition {
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v</strong>", c.Name, u.ShortenDecimal(debt, 0, 2), u.ShortenDecimal(_prev, 0, 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v</strong>", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2)), nil
 		} else if debt.GreaterThan(_prev.Add(offset)) || debt.LessThan(_prev.Sub(offset)) {
 			c.prev = debt
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v | L:%v | H:%v</strong>", c.Name, u.ShortenDecimal(debt, 0, 2), u.ShortenDecimal(_prev, 0, 2), u.ShortenDecimal(c.prev.Sub(offset), 0, 2), u.ShortenDecimal(c.prev.Add(offset), 0, 2)), nil
+			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v | L:%v | H:%v</strong>", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(c.prev.Sub(offset), 0, 2), math.ShortenDecimal(c.prev.Add(offset), 0, 2)), nil
 		}
 	}
 	return "", nil
