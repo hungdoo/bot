@@ -5,43 +5,40 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/joho/godotenv"
 )
 
-var BotEnvs = make(map[string]string)
+var BotEnvs map[string]string
 
 func InitEnv() {
 	path, _ := filepath.Abs(".")
 	defaultEnv := os.Getenv("BOT_ENV")
+	envPath := ""
 	switch defaultEnv {
-	case "dev", "prod":
-		envPath := fmt.Sprintf("%s/.env.%s", path, defaultEnv)
-		err := godotenv.Load(envPath)
-		if err != nil {
-			log.Fatalf("Error loading %s file", envPath)
-		}
+	case "dev":
+		envPath = fmt.Sprintf("%s/.env.%s", path, defaultEnv)
+	case "prod":
+		envPath = "/data/.env.prod"
 	default:
-		envPath := fmt.Sprintf("%s/.env", path)
-		err := godotenv.Load(envPath)
-		if err != nil {
-			log.Fatalf("Error loading %s file", envPath)
-		}
+		envPath = fmt.Sprintf("%s/.env", path)
 	}
 
-	// Double check ENV with BOT_ prefixes
-	for _, env := range os.Environ() {
-		envPair := strings.SplitN(env, "=", 2)
-		key := envPair[0]
-		value := envPair[1]
+	var err error
+	BotEnvs, err = godotenv.Read(envPath)
+	if err != nil {
+		log.Fatalf("Error loading %s file: %s", envPath, err)
+	}
 
-		if strings.Contains(key, "BOT_") {
-			BotEnvs[key] = value
-		}
+	for k, v := range BotEnvs {
+		GeneralLogger.Printf("%s:%s\n", k, v)
 	}
 }
 
 func Abs(s string) {
 	panic("unimplemented")
+}
+
+func GetEnv(k string) (v string) {
+	return BotEnvs[k]
 }

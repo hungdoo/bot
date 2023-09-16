@@ -79,3 +79,38 @@ func TestExampleViewCall(t *testing.T) {
 	}
 	fmt.Printf("%+v\n", values[len(values)-1].(*big.Int))
 }
+
+func TestExampleViewCallEth(t *testing.T) {
+	eth, err := GetETH("https://eth-mainnet.g.alchemy.com/v2/mMYHej_ARM0DtyDn2nE8DaT7nwysNqkg")
+	if err != nil {
+		panic(err)
+	}
+
+	vc := utils.NewViewCall(
+		"getAmountOut(uint256,address,address)(uint256,bool)",
+		[]interface{}{"1000000000000000000000", "0x777172D858dC1599914a1C4c6c9fC48c99a60990", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"},
+	)
+
+	packed, err := vc.CallData()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("data: 0x%v\n", hex.EncodeToString(packed))
+	res, err := eth.CallContractFunction("0x"+hex.EncodeToString(packed), "0x77784f96C936042A3ADB1dD29C91a55EB2A4219f", ethrpc.DefaultCallGas)
+	if err != nil {
+		fmt.Printf("res: %v\n", res)
+		panic(err)
+	}
+
+	res = strings.TrimPrefix(res, "0x")
+	bytes, err := hex.DecodeString(res)
+	if err != nil {
+		panic(err)
+	}
+	values, err := vc.Decode(bytes)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
+	fmt.Printf("%+v\n", values[0].(*big.Int))
+}

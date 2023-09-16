@@ -6,19 +6,20 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/telegram"
 	u "github.com/hungdoo/bot/src/packages/utils"
-	"github.com/hungdoo/bot/src/types"
 )
 
 type CommandService struct {
+	interfaces.IService
 	Factory CommandFactory
 	ChatID  int64
 }
 
 func (c *CommandService) process(message string) string {
 	ret := "No action"
-	messages := strings.Split(strings.TrimSpace(message), " ")
+	messages := strings.Split(strings.ToLower(strings.TrimSpace(message)), " ")
 	if len(messages) > 0 {
 		switch messages[0] {
 		case "add":
@@ -70,7 +71,10 @@ func (c *CommandService) process(message string) string {
 // Work all commands in intervals
 func (c *CommandService) Work() {
 	for {
-		jobs := c.Factory.GetJobs()
+		jobs, err := c.Factory.GetJobs()
+		if err != nil {
+			u.GeneralLogger.Printf("GetJobs err: [%s]", err)
+		}
 		for _, j := range jobs {
 			if !j.IsIdle() {
 				result, err := j.Execute(false)
@@ -114,5 +118,5 @@ func (c *CommandService) Run() error {
 }
 
 func NewService() *CommandService {
-	return &CommandService{Factory: CommandFactory{commands: map[string]types.ICommand{}}}
+	return &CommandService{Factory: CommandFactory{commands: map[string]interfaces.ICommand{}}}
 }

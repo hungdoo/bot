@@ -23,6 +23,6 @@ func init() {
 	// 	os.Exit(1)
 	// }
 	generalLog := os.Stdout
-	GeneralLogger = log.New(generalLog, "General Logger:\t", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLogger = log.New(generalLog, "Error Logger:\t", log.Ldate|log.Ltime|log.Lshortfile)
+	GeneralLogger = log.New(generalLog, "General:\t", log.Ldate|log.Lshortfile)
+	ErrorLogger = log.New(generalLog, "Error:\t", log.Ldate|log.Lshortfile)
 }
