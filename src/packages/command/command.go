@@ -8,9 +8,9 @@ import (
 )
 
 type Command struct {
-	interfaces.ICommand `bson:"-"`
+	interfaces.ICommand `json:"-" bson:"-"`
 	Name                string        `bson:"name"`
-	Type                CommandType   `bson:"type"`
+	Type                CommandType   `json:"-" bson:"type"`
 	Data                []string      `bson:"data"`
 	ExecutedTime        time.Time     `bson:"executedtime"`
 	IdleTime            time.Duration `bson:"idletime"`
@@ -23,6 +23,9 @@ func (c *Command) SetEnabled(newValue bool) {
 }
 func (c *Command) SetExecutedTime(newValue time.Time) {
 	c.ExecutedTime = newValue
+}
+func (c *Command) SetIdleTime(newValue time.Duration) {
+	c.IdleTime = newValue
 }
 func (c *Command) SetType(name string) error {
 	if t := IsType(name); t != Unknown {

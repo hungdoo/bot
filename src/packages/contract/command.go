@@ -101,12 +101,12 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 		_high := c.prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 		_low := c.prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
 		if noCondition {
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v</strong>", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2)), nil
+			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2)), nil
 		} else if valueDecimal.GreaterThan(_high) || valueDecimal.LessThan(_low) {
 			c.prev = valueDecimal
 			newHigh := c.prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 			newLow := c.prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v | L:%v | H:%v</strong>", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2), math.ShortenDecimal(newLow, int32(precision), 2), math.ShortenDecimal(newHigh, int32(precision), 2)), nil
+			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2), math.ShortenDecimal(newLow, int32(precision), 2), math.ShortenDecimal(newHigh, int32(precision), 2)), nil
 		}
 	} else {
 		return "", fmt.Errorf("cannot parse value [%v]", values...)

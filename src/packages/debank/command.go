@@ -49,10 +49,10 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 		}
 		_prev := c.prev
 		if noCondition {
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v</strong>", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2)), nil
+			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2)), nil
 		} else if debt.GreaterThan(_prev.Add(offset)) || debt.LessThan(_prev.Sub(offset)) {
 			c.prev = debt
-			return fmt.Sprintf("%v\n<strong>V:%v | Pre: %v | L:%v | H:%v</strong>", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(c.prev.Sub(offset), 0, 2), math.ShortenDecimal(c.prev.Add(offset), 0, 2)), nil
+			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(c.prev.Sub(offset), 0, 2), math.ShortenDecimal(c.prev.Add(offset), 0, 2)), nil
 		}
 	}
 	return "", nil

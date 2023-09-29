@@ -79,5 +79,6 @@ func GetDb() *MongoDB {
 	if err != nil {
 		log.ErrorLogger.Fatal(err)
 	}
+
 	return _db
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/dotenv"
-	"github.com/hungdoo/bot/src/services/commands"
+	"github.com/hungdoo/bot/src/services/telecommands"
 )
 
 func main() {
@@ -12,7 +12,8 @@ func main() {
 	_db := db.GetDb()
 	defer _db.Close()
 
-	commandService := commands.NewService()
+	commandService := telecommands.NewService()
+	commandService.RegisterCommands()
 	go commandService.Work()
 	commandService.Run()
 }

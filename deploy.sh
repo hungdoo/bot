@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Step 1: Build the Docker image
-docker build -t your-dockerhub-username/your-app .
+docker build -t hungddoo/telebot:latest .
 
 # Step 2: Push the Docker image to Docker Hub
-docker push your-dockerhub-username/your-app
+docker push hungddoo/telebot:latest
 
 # Step 3: SSH into the host server and restart the Docker Compose orchestration
-ssh user@your-host-server "cd /path/to/your/docker-compose/directory && docker-compose down && docker-compose pull && docker-compose up -d"
+# ssh user@your-host-server "cd /path/to/your/docker-compose/directory && docker-compose down && docker-compose pull && docker-compose up -d"

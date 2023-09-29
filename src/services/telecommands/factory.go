@@ -1,7 +1,8 @@
-package commands
+package telecommands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -105,6 +106,17 @@ func (c *CommandFactory) Remove(name string) string {
 	return fmt.Sprintf("Command [%v] not found", name)
 }
 
+func (c *CommandFactory) Show(name string) string {
+	if cmd, ok := c.commands[name]; ok {
+		b, err := json.MarshalIndent(cmd, "", "  ")
+		if err != nil {
+			return err.Error()
+		}
+		return string(b)
+	}
+	return fmt.Sprintf("Command [%v] not found", name)
+}
+
 func (c *CommandFactory) Exec(name string) (string, error) {
 	if v, ok := c.commands[name]; ok {
 		var cmd interfaces.ICommand = v
@@ -117,9 +129,9 @@ func (c *CommandFactory) List() string {
 	cmdTxt := []string{}
 	for _, cmd := range c.commands {
 		if cmd.IsEnabled() {
-			cmdTxt = append(cmdTxt, fmt.Sprintf("<strong>%v: data(%v)</strong>", cmd.GetName(), strings.Join(cmd.GetData(), ", ")))
+			cmdTxt = append(cmdTxt, fmt.Sprintf("[+] %v", cmd.GetName()))
 		} else {
-			cmdTxt = append(cmdTxt, fmt.Sprintf("%v: data(%v)", cmd.GetName(), strings.Join(cmd.GetData(), ", ")))
+			cmdTxt = append(cmdTxt, fmt.Sprintf("[-] %v", cmd.GetName()))
 		}
 	}
 	return strings.Join(cmdTxt, "\n")
@@ -128,6 +140,11 @@ func (c *CommandFactory) List() string {
 func (c *CommandFactory) On(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(true)
+		filter := bson.M{"name": v.GetName()}
+		update := bson.M{"$set": bson.M{"enabled": true}}
+		if err := db.GetDb().Update("commands", filter, update); err != nil {
+			return err.Error()
+		}
 		return fmt.Sprintf("Command [%v] on", name)
 	}
 	return fmt.Sprintf("Command [%v] not found", name)
@@ -136,7 +153,25 @@ func (c *CommandFactory) On(name string) string {
 func (c *CommandFactory) Off(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(false)
+		filter := bson.M{"name": v.GetName()}
+		update := bson.M{"$set": bson.M{"enabled": false}}
+		if err := db.GetDb().Update("commands", filter, update); err != nil {
+			return err.Error()
+		}
 		return fmt.Sprintf("Command [%v] off", name)
+	}
+	return fmt.Sprintf("Command [%v] not found", name)
+}
+
+func (c *CommandFactory) SetInterval(name string, interval time.Duration) string {
+	if v, ok := c.commands[name]; ok {
+		v.SetIdleTime(interval)
+		filter := bson.M{"name": v.GetName()}
+		update := bson.M{"$set": bson.M{"idletime": interval}}
+		if err := db.GetDb().Update("commands", filter, update); err != nil {
+			return err.Error()
+		}
+		return fmt.Sprintf("Command [%v] interval: [%v]", name, interval)
 	}
 	return fmt.Sprintf("Command [%v] not found", name)
 }

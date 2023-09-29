@@ -5,6 +5,7 @@ import "time"
 type ICommand interface {
 	SetData(newValue []string) error
 	SetExecutedTime(newValue time.Time)
+	SetIdleTime(newValue time.Duration)
 	SetEnabled(newValue bool)
 	SetType(name string) error
 
