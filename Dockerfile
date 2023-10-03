@@ -1,16 +1,13 @@
-# docker buildx create --use
-# docker buildx build -t hungddoo/telebot:latest --platform=linux/amd64,linux/arm64 --push .
 # Build stage
-FROM --platform=$BUILDPLATFORM golang:1.17-alpine AS builder
+FROM golang:1.17-alpine AS builder
 WORKDIR /src
 COPY go.mod go.sum .
 RUN go mod download
 COPY . .
-ARG TARGETOS TARGETARCH
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app ./src
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app ./src
 
 # Runtime stage
 FROM scratch

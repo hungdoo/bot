@@ -64,7 +64,7 @@ func (c *CommandFactory) Add(messages []string) string {
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
-					IdleTime: time.Second * 20,
+					IdleTime: time.Second * 60,
 				},
 			}
 		case command.Debank:
@@ -72,7 +72,7 @@ func (c *CommandFactory) Add(messages []string) string {
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
-					IdleTime: time.Second * 20,
+					IdleTime: time.Second * 60,
 				},
 			}
 		}

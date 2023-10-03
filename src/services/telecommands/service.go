@@ -28,9 +28,10 @@ type CommandService struct {
 func (s *CommandService) RegisterCommands() {
 	s.Parser.Commands = []cli.Command{
 		{
-			Name:    "add",
-			Aliases: []string{"a"},
-			Usage:   "add a task to the list",
+			Name:      "add",
+			Aliases:   []string{"a"},
+			Usage:     "add a task to the list",
+			UsageText: "rpc, contract address, method (getUserAccountData(address)(uint256), params(pr1;pr2), value index, margin(1%%), precision",
 			Action: func(c *cli.Context) error {
 				fmt.Fprintln(s.Parser.Writer, s.Factory.Add(c.Args()))
 				return nil

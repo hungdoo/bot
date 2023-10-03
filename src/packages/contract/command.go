@@ -21,7 +21,7 @@ type Command struct {
 
 func (c *Command) Validate(data []string) error {
 	if len(data) < 7 {
-		return fmt.Errorf("contract command needs at least 4 params: rpc, contract address, method (getUserAccountData(address)(uint256), params(pr1;pr2), value index, margin(1%%), precision")
+		return fmt.Errorf("invalid params: rpc, contract address, method (getUserAccountData(address)(uint256), params(pr1;pr2), value index, margin(1%%), precision")
 	}
 	return nil
 }
@@ -49,8 +49,12 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 	}
 	vc := NewViewCall(
 		method,
-		args,
+		nil,
 	)
+	argTypes := vc.ArgumentTypes()
+	if len(argTypes) != 0 {
+		vc.arguments = args
+	}
 
 	packed, err := vc.CallData()
 	if err != nil {
