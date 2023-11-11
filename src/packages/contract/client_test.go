@@ -45,6 +45,18 @@ func TestConntractCall(t *testing.T) {
 	fmt.Printf("%+v\n", v["healthFactor"])
 }
 
+func TestViewCall_boolType(t *testing.T) {
+	vc := NewViewCall(
+		"abc(bool)",
+		[]interface{}{"false"},
+	)
+	_, err := vc.CallData()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(vc.CallData())
+}
+
 func TestExampleViewCall(t *testing.T) {
 	eth, err := GetETH("https://rpc.ankr.com/fantom")
 	if err != nil {

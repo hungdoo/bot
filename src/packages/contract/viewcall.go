@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -122,6 +123,13 @@ func (call ViewCall) getArgument(index int, argumentType string) (interface{}, e
 			return nil, fmt.Errorf("expected address argument to be a string")
 		}
 		return toByteArray(address)
+	} else if argumentType == "bool" {
+		argStr, ok := arg.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected bool argument to be a string: true/false")
+		}
+
+		return strconv.ParseBool(argStr)
 	} else if numericArg.MatchString(argumentType) {
 		if num, ok := arg.(json.Number); ok {
 			if v, err := num.Int64(); err != nil {
