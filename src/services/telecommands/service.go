@@ -166,7 +166,7 @@ func (c *CommandService) Work() {
 				}
 				// exec seccessfully -> update prev in db
 				filter := bson.M{"name": j.GetName()}
-				update := bson.M{"$set": bson.M{"prev": j.GetPrev()}}
+				update := bson.M{"$set": bson.M{"prev": j.GetPrev().String()}} // mongo not support decimal type
 				if err := db.GetDb().Update("commands", filter, update); err != nil {
 					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
 					continue

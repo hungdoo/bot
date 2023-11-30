@@ -137,14 +137,14 @@ func (c *CommandFactory) Exec(name string) (res string, err error) {
 
 	var executed []string
 	for _, cmd := range searchedList {
-		_, err = cmd.Execute(true)
+		result, err := cmd.Execute(true)
 		if err != nil {
 			log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
 			continue
 		}
-		executed = append(executed, cmd.GetName())
+		executed = append(executed, strings.Join([]string{cmd.GetName(), result}, "\n"))
 	}
-	return string(strings.Join(executed, "")), nil
+	return string(strings.Join(executed, "\n")), nil
 }
 
 func (c *CommandFactory) List() string {
