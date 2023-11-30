@@ -164,6 +164,13 @@ func (c *CommandService) Work() {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
 					continue
 				}
+				// exec seccessfully -> update prev in db
+				filter := bson.M{"name": j.GetName()}
+				update := bson.M{"$set": bson.M{"prev": j.GetPrev()}}
+				if err := db.GetDb().Update("commands", filter, update); err != nil {
+					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
+					continue
+				}
 				if result != "" {
 					msg := tgbotapi.NewMessage(c.ChatID, result)
 					msg.ParseMode = ""

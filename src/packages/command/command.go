@@ -16,7 +16,7 @@ type Command struct {
 	ExecutedTime        time.Time       `bson:"executedtime"`
 	IdleTime            time.Duration   `bson:"idletime"`
 	Enabled             bool            `bson:"enabled"`
-	Prev                decimal.Decimal `bson:"Prev"`
+	Prev                decimal.Decimal `bson:"prev"`
 }
 
 // Setters

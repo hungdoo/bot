@@ -135,13 +135,16 @@ func (c *CommandFactory) Exec(name string) (res string, err error) {
 		return "", fmt.Errorf("command [%v] not found", name)
 	}
 
+	var executed []string
 	for _, cmd := range searchedList {
-		res, err = cmd.Execute(true)
+		_, err = cmd.Execute(true)
 		if err != nil {
-			return res, err
+			log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
+			continue
 		}
+		executed = append(executed, cmd.GetName())
 	}
-	return "", nil
+	return string(strings.Join(executed, "")), nil
 }
 
 func (c *CommandFactory) List() string {
