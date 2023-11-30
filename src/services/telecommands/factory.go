@@ -131,13 +131,17 @@ func (c *CommandFactory) Show(name string) string {
 
 func (c *CommandFactory) Exec(name string) (res string, err error) {
 	searchedList := c.commands.Search(name)
+	if len(searchedList) == 0 {
+		return "", fmt.Errorf("command [%v] not found", name)
+	}
+
 	for _, cmd := range searchedList {
 		res, err = cmd.Execute(true)
 		if err != nil {
 			return res, err
 		}
 	}
-	return "", fmt.Errorf("command [%v] not found", name)
+	return "", nil
 }
 
 func (c *CommandFactory) List() string {
@@ -217,8 +221,9 @@ func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
 					Command: cmd,
 				}
 			}
-			c.commands[cmd.GetName()] = _command
-			log.GeneralLogger.Printf("Loaded Command [%v]\n", _command.GetName())
+			name := cmd.GetName()
+			c.commands[name] = _command
+			log.GeneralLogger.Printf("Loaded Command [%v]\n", name)
 		}
 	}
 

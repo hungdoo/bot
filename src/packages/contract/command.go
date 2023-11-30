@@ -14,9 +14,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const DECIMAL_POINTS = 4
+
 type Command struct {
 	command.Command
-	prev decimal.Decimal
 }
 
 func (c *Command) Validate(data []string) error {
@@ -101,16 +102,17 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 			margin = decimal.NewFromInt(1)
 		}
 		valueDecimal := decimal.NewFromBigInt(value, 0)
-		_prev := c.prev
-		_high := c.prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
-		_low := c.prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
+		_prev := c.GetPrev()
+		_high := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
+		_low := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
 		if noCondition {
-			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2)), nil
+			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS)), nil
 		} else if valueDecimal.GreaterThan(_high) || valueDecimal.LessThan(_low) {
-			c.prev = valueDecimal
-			newHigh := c.prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
-			newLow := c.prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), 2), math.ShortenDecimal(_prev, int32(precision), 2), math.ShortenDecimal(newLow, int32(precision), 2), math.ShortenDecimal(newHigh, int32(precision), 2)), nil
+			c.SetPrev(valueDecimal)
+
+			newHigh := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
+			newLow := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
+			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newLow, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newHigh, int32(precision), DECIMAL_POINTS)), nil
 		}
 	} else {
 		return "", fmt.Errorf("cannot parse value [%v]", values...)
