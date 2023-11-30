@@ -102,7 +102,10 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 			margin = decimal.NewFromInt(1)
 		}
 		valueDecimal := decimal.NewFromBigInt(value, 0)
-		_prev := c.GetPrev()
+		_prev, err := c.GetPrev()
+		if err != nil {
+			log.GeneralLogger.Printf("[%s] execution GetPrev failed: [%s]", c.GetName(), err)
+		}
 		_high := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 		_low := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
 		if noCondition {

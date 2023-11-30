@@ -165,8 +165,13 @@ func (c *CommandService) Work() {
 					continue
 				}
 				// exec seccessfully -> update prev in db
+				_prev, err := j.GetPrev()
+				if err != nil {
+					log.GeneralLogger.Printf("[%s] Work - GetPrev failed: [%s]", j.GetName(), err)
+					continue
+				}
 				filter := bson.M{"name": j.GetName()}
-				update := bson.M{"$set": bson.M{"prev": j.GetPrev().String()}} // mongo not support decimal type
+				update := bson.M{"$set": bson.M{"prev": _prev.String()}}
 				if err := db.GetDb().Update("commands", filter, update); err != nil {
 					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
 					continue
@@ -219,5 +224,5 @@ func NewService() *CommandService {
 		log.ErrorLogger.Fatal(err)
 	}
 
-	return &CommandService{Factory: CommandFactory{commands: map[string]interfaces.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}, Parser: parser}
+	return &CommandService{Factory: NewCommadFactory(), Parser: parser}
 }

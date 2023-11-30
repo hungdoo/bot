@@ -5,9 +5,9 @@ import "github.com/shopspring/decimal"
 type Markets struct {
 	Id                 string
 	Name               string
-	CollateralFactor   decimal.Decimal
+	CollateralFactor   decimal.NullDecimal
 	UnderlyingSymbol   string
-	UnderlyingDecimals decimal.Decimal
+	UnderlyingDecimals decimal.NullDecimal
 }
 
 var MarketQuery struct {

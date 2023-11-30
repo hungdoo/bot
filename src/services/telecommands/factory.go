@@ -50,6 +50,10 @@ type CommandFactory struct {
 	refreshDbInterval time.Duration
 }
 
+func NewCommadFactory() CommandFactory {
+	return CommandFactory{commands: map[string]interfaces.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}
+}
+
 func (c *CommandFactory) Add(messages []string) string {
 	if len(messages) < 2 {
 		return "Add needs at least 2 params"
@@ -142,7 +146,7 @@ func (c *CommandFactory) Exec(name string) (res string, err error) {
 			log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
 			continue
 		}
-		executed = append(executed, strings.Join([]string{cmd.GetName(), result}, "\n"))
+		executed = append(executed, result)
 	}
 	return string(strings.Join(executed, "\n")), nil
 }

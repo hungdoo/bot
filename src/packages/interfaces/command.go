@@ -14,7 +14,7 @@ type ICommand interface {
 	SetEnabled(newValue bool)
 	SetType(name string) error
 
-	GetPrev() decimal.Decimal
+	GetPrev() (decimal.Decimal, error)
 	GetName() string
 	GetData() []string
 	GetUnderlying() interface{}

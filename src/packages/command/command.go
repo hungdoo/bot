@@ -10,18 +10,18 @@ import (
 
 type Command struct {
 	interfaces.ICommand `json:"-" bson:"-"`
-	Name                string          `bson:"name"`
-	Type                CommandType     `json:"-" bson:"type"`
-	Data                []string        `bson:"data"`
-	ExecutedTime        time.Time       `bson:"executedtime"`
-	IdleTime            time.Duration   `bson:"idletime"`
-	Enabled             bool            `bson:"enabled"`
-	Prev                decimal.Decimal `bson:"prev"`
+	Name                string        `bson:"name"`
+	Type                CommandType   `json:"-" bson:"type"`
+	Data                []string      `bson:"data"`
+	ExecutedTime        time.Time     `bson:"executedtime"`
+	IdleTime            time.Duration `bson:"idletime"`
+	Enabled             bool          `bson:"enabled"`
+	Prev                string        `bson:"prev"`
 }
 
 // Setters
 func (c *Command) SetPrev(newValue decimal.Decimal) {
-	c.Prev = newValue
+	c.Prev = newValue.String()
 }
 func (c *Command) SetEnabled(newValue bool) {
 	c.Enabled = newValue
@@ -41,8 +41,13 @@ func (c *Command) SetType(name string) error {
 }
 
 // Getters
-func (c *Command) GetPrev() decimal.Decimal {
-	return c.Prev
+func (c *Command) GetPrev() (decimal.Decimal, error) {
+	d := decimal.Zero
+	err := d.Scan(c.Prev)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return d, nil
 }
 func (c *Command) GetData() []string {
 	return c.Data

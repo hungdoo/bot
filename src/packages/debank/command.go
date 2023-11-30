@@ -11,7 +11,6 @@ import (
 
 type Command struct {
 	command.Command
-	prev decimal.Decimal
 }
 
 func (c *Command) Validate(data []string) error {
@@ -36,7 +35,6 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	offset, err := decimal.NewFromString(offsetStr)
 	if err != nil {
 		return "", err
@@ -47,12 +45,15 @@ func (c *Command) Execute(noCondition bool) (string, error) {
 		if !offset.IsPositive() {
 			offset = decimal.NewFromInt(50000)
 		}
-		_prev := c.prev
+		_prev, err := c.GetPrev()
+		if err != nil {
+			log.GeneralLogger.Printf("[%s] execution GetPrev failed: [%s]", c.GetName(), err)
+		}
 		if noCondition {
 			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2)), nil
 		} else if debt.GreaterThan(_prev.Add(offset)) || debt.LessThan(_prev.Sub(offset)) {
-			c.prev = debt
-			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(c.prev.Sub(offset), 0, 2), math.ShortenDecimal(c.prev.Add(offset), 0, 2)), nil
+			c.SetPrev(debt)
+			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(_prev.Sub(offset), 0, 2), math.ShortenDecimal(_prev.Add(offset), 0, 2)), nil
 		}
 	}
 	return "", nil
