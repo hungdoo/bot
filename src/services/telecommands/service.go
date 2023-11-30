@@ -212,5 +212,5 @@ func NewService() *CommandService {
 		log.ErrorLogger.Fatal(err)
 	}
 
-	return &CommandService{Factory: CommandFactory{commands: map[string]interfaces.ICommand{}}, Parser: parser}
+	return &CommandService{Factory: CommandFactory{commands: map[string]interfaces.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}, Parser: parser}
 }

@@ -18,6 +18,15 @@ import (
 
 type CommandMap map[string]interfaces.ICommand
 
+func (cm *CommandMap) Search(nameSubString string) []interfaces.ICommand {
+	list := make([]interfaces.ICommand, 0, len(*cm))
+	for _, v := range *cm {
+		if strings.Contains(v.GetName(), nameSubString) {
+			list = append(list, v)
+		}
+	}
+	return list
+}
 func (cm *CommandMap) ToList() []interfaces.ICommand {
 	list := make([]interfaces.ICommand, 0, len(*cm))
 	for _, v := range *cm {
@@ -36,7 +45,9 @@ func (cm *CommandMap) ToActiveList() []interfaces.ICommand {
 }
 
 type CommandFactory struct {
-	commands CommandMap
+	commands          CommandMap
+	lastRefreshedAt   time.Time
+	refreshDbInterval time.Duration
 }
 
 func (c *CommandFactory) Add(messages []string) string {
@@ -107,8 +118,9 @@ func (c *CommandFactory) Remove(name string) string {
 }
 
 func (c *CommandFactory) Show(name string) string {
-	if cmd, ok := c.commands[name]; ok {
-		b, err := json.MarshalIndent(cmd, "", "  ")
+	searchedList := c.commands.Search(name)
+	if len(searchedList) != 0 {
+		b, err := json.MarshalIndent(searchedList, "", "  ")
 		if err != nil {
 			return err.Error()
 		}
@@ -117,10 +129,13 @@ func (c *CommandFactory) Show(name string) string {
 	return fmt.Sprintf("Command [%v] not found", name)
 }
 
-func (c *CommandFactory) Exec(name string) (string, error) {
-	if v, ok := c.commands[name]; ok {
-		var cmd interfaces.ICommand = v
-		return cmd.Execute(true)
+func (c *CommandFactory) Exec(name string) (res string, err error) {
+	searchedList := c.commands.Search(name)
+	for _, cmd := range searchedList {
+		res, err = cmd.Execute(true)
+		if err != nil {
+			return res, err
+		}
 	}
 	return "", fmt.Errorf("command [%v] not found", name)
 }
@@ -177,7 +192,9 @@ func (c *CommandFactory) SetInterval(name string, interval time.Duration) string
 }
 
 func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
-	if len(c.commands) == 0 {
+	if len(c.commands) == 0 || time.Since(c.lastRefreshedAt) >= c.refreshDbInterval {
+		c.lastRefreshedAt = time.Now()
+
 		cursor, err := db.GetDb().Find("commands", bson.D{})
 		if err != nil {
 			return nil, err
