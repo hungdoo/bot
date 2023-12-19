@@ -156,6 +156,7 @@ func (c *CommandService) Work() {
 		if err != nil {
 			log.GeneralLogger.Printf("GetJobs err: [%s]", err)
 		}
+		var results []string
 		for _, j := range jobs {
 			if !j.IsIdle() {
 				result, err := j.Execute(false)
@@ -177,11 +178,14 @@ func (c *CommandService) Work() {
 					continue
 				}
 				if result != "" {
-					msg := tgbotapi.NewMessage(c.ChatID, result)
-					msg.ParseMode = ""
-					telegram.GetBot().Send(msg)
+					results = append(results, result)
 				}
 			}
+		}
+		if len(results) != 0 {
+			msg := tgbotapi.NewMessage(c.ChatID, strings.Join(results, "\n"))
+			msg.ParseMode = ""
+			telegram.GetBot().Send(msg)
 		}
 		time.Sleep(time.Millisecond * 5000)
 	}
