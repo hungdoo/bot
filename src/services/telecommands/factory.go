@@ -19,7 +19,7 @@ import (
 type CommandMap map[string]interfaces.ICommand
 
 func (cm *CommandMap) Search(nameSubString string) []interfaces.ICommand {
-	list := make([]interfaces.ICommand, 0, len(*cm))
+	list := make([]interfaces.ICommand, 0)
 	for _, v := range *cm {
 		if strings.Contains(v.GetName(), nameSubString) {
 			list = append(list, v)
@@ -28,14 +28,14 @@ func (cm *CommandMap) Search(nameSubString string) []interfaces.ICommand {
 	return list
 }
 func (cm *CommandMap) ToList() []interfaces.ICommand {
-	list := make([]interfaces.ICommand, 0, len(*cm))
+	list := make([]interfaces.ICommand, 0)
 	for _, v := range *cm {
 		list = append(list, v)
 	}
 	return list
 }
 func (cm *CommandMap) ToActiveList() []interfaces.ICommand {
-	actives := make([]interfaces.ICommand, 0, len(*cm))
+	actives := make([]interfaces.ICommand, 0)
 	for _, v := range *cm {
 		if v.IsEnabled() {
 			actives = append(actives, v)
