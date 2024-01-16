@@ -201,14 +201,21 @@ func (c *CommandService) Run() error {
 			continue
 		}
 
-		log.GeneralLogger.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, c.process(update.Message.Text))
+		fromUser := update.Message.From.UserName
+		userChatId := update.Message.Chat.ID
+		if !telegram.IsWhitelisted(fromUser) {
+			telegram.ReportInvalidAccess(fromUser)
+			continue
+		}
+
+		log.GeneralLogger.Printf("[%s:%d] %s", fromUser, userChatId, update.Message.Text)
+		msg := tgbotapi.NewMessage(userChatId, c.process(update.Message.Text))
 		msg.ReplyToMessageID = update.Message.MessageID
 		msg.ParseMode = ""
 
 		telegram.GetBot().Send(msg)
 		if c.ChatID == 0 {
-			c.ChatID = update.Message.Chat.ID
+			c.ChatID = userChatId
 		}
 	}
 	return nil

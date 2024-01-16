@@ -3,4 +3,4 @@ main
 .env
 .env.test
 app
-.DS_Store
+*DS_Store
