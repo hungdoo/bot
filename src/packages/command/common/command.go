@@ -17,6 +17,7 @@ type Command struct {
 	IdleTime            time.Duration `bson:"idletime"`
 	Enabled             bool          `bson:"enabled"`
 	Prev                string        `bson:"prev"`
+	Error               string        `bson:"error"`
 }
 
 // Setters
@@ -32,12 +33,8 @@ func (c *Command) SetExecutedTime(newValue time.Time) {
 func (c *Command) SetIdleTime(newValue time.Duration) {
 	c.IdleTime = newValue
 }
-func (c *Command) SetType(name string) error {
-	if t := IsType(name); t != Unknown {
-		c.Type = t
-		return nil
-	}
-	return fmt.Errorf("unsupported command type for %s", name)
+func (c *Command) SetError(err error) {
+	c.Error = err.Error()
 }
 
 // Getters
@@ -52,8 +49,20 @@ func (c *Command) GetPrev() (decimal.Decimal, error) {
 func (c *Command) GetData() []string {
 	return c.Data
 }
+func (c *Command) GetError() string {
+	return c.Error
+}
+func (c *Command) GetOverview() string {
+	lastErr := c.GetError()
+
+	if len(lastErr) != 0 {
+		return fmt.Sprintf("%v - %v - %.2fmin ago\nlastErr: %s", c.GetName(), c.Prev, time.Since(c.ExecutedTime).Minutes(), lastErr)
+	}
+	return fmt.Sprintf("%v - %v - %.2fmin ago", c.GetName(), c.Prev, time.Since(c.ExecutedTime).Minutes())
+
+}
 func (c *Command) GetName() string {
-	return c.Name
+	return fmt.Sprintf("%v_%v", c.Name, c.Type.String())
 }
 func (c *Command) IsEnabled() bool {
 	return c.Enabled
@@ -61,6 +70,7 @@ func (c *Command) IsEnabled() bool {
 func (c *Command) IsIdle() bool {
 	return time.Since(c.ExecutedTime) < c.IdleTime
 }
+
 func (c *Command) GetUnderlying() interface{} {
 	return *c
 }

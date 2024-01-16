@@ -8,6 +8,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hungdoo/bot/src/packages/cmdparser"
+	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
@@ -28,17 +29,35 @@ type CommandService struct {
 func (s *CommandService) RegisterCommands() {
 	s.Parser.Commands = []cli.Command{
 		{
-			Name:      "add",
-			Aliases:   []string{"a"},
-			Usage:     "add a task to the list",
-			UsageText: "callContract-xyz, rpc, contract address, method (axy(address)(uint256), params(pr1;pr2), value index, margin(1%), usdcPrice;precision",
-			Action: func(c *cli.Context) error {
-				fmt.Fprintln(s.Parser.Writer, s.Factory.Add(c.Args()))
-				return nil
+			Name:    "add",
+			Aliases: []string{"a"},
+			Usage:   "add a task to the list",
+			Subcommands: []cli.Command{
+				{
+					Name:      "call",
+					UsageText: "name, rpc, contract address, method (axy(address)(uint256), params(pr1;pr2), value index, margin(1%), usdcPrice;precision",
+					Action: func(c *cli.Context) error {
+						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.ContractCall, c.Args()))
+						return nil
+					},
+				},
+				{
+					Name:      "debank",
+					UsageText: "name",
+					Action: func(c *cli.Context) error {
+						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.Debank, c.Args()))
+						return nil
+					},
+				},
+				{
+					Name:      "tomb",
+					UsageText: "name, rpc, contract, up, pkIdx, k",
+					Action: func(c *cli.Context) error {
+						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.Tomb, c.Args()))
+						return nil
+					},
+				},
 			},
-			// TODO: split Action into SubCommands: callContract, debank
-			// Usage contract: rpc, contractAddr, method, params<;>, valueIdx, marginStr, precisionStr
-			// Usage debank: ...
 		},
 		{
 			Name:    "remove",
@@ -70,18 +89,48 @@ func (s *CommandService) RegisterCommands() {
 			Name:    "execute",
 			Aliases: []string{"exec"},
 			Usage:   "exec a task",
-			Flags: []cli.Flag{
-				cli.StringFlag{Name: "task,t", Required: true},
-			},
-			Action: func(c *cli.Context) error {
-				task := c.String("task")
-				res, err := s.Factory.Exec(task)
-				if err != nil {
-					fmt.Fprintln(s.Parser.Writer, err.Error())
-					return err
-				}
-				fmt.Fprintln(s.Parser.Writer, res)
-				return nil
+			Subcommands: []cli.Command{
+				{
+					Name: "call",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "task,t"},
+					},
+					Action: func(c *cli.Context) error {
+						task := c.String("task")
+						res, err := s.Factory.Exec(task, "")
+						if err != nil {
+							fmt.Fprintln(s.Parser.Writer, err.Error())
+							return err
+						}
+						fmt.Fprintln(s.Parser.Writer, res)
+						return nil
+					},
+				},
+				{
+					Name: "debank",
+					Action: func(c *cli.Context) error {
+						return nil
+					},
+				},
+				{
+					Name:      "tomb",
+					UsageText: "name, rpc, contract, up, pkIdx, k",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "task,t", Required: true},
+						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, claim, cronjob, default", Value: "default"},
+					},
+					Action: func(c *cli.Context) error {
+						task := c.String("task")
+						subcommand := c.String("subcommand")
+						res, err := s.Factory.Exec(task, subcommand)
+						if err != nil {
+							fmt.Fprintln(s.Parser.Writer, err.Error())
+							return err
+						}
+						fmt.Fprintln(s.Parser.Writer, res)
+						return nil
+					},
+				},
 			},
 		},
 		{
@@ -159,10 +208,11 @@ func (c *CommandService) Work() {
 		var results []string
 		for _, j := range jobs {
 			if !j.IsIdle() {
-				result, err := j.Execute(false)
+				result, err := j.Execute(false, "")
 				j.SetExecutedTime(time.Now())
 				if err != nil {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
+					j.SetError(err)
 					continue
 				}
 				// exec seccessfully -> update prev in db

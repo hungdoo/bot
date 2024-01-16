@@ -3,7 +3,7 @@ package debank
 import (
 	"fmt"
 
-	"github.com/hungdoo/bot/src/packages/command"
+	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/math"
 	"github.com/shopspring/decimal"
@@ -27,7 +27,7 @@ func (c *Command) SetData(newValue []string) error {
 	return nil
 }
 
-func (c *Command) Execute(noCondition bool) (string, error) {
+func (c *Command) Execute(noCondition bool, _ string) (string, error) {
 	userAddr, offsetStr := c.Data[0], c.Data[1]
 	log.GeneralLogger.Printf("[%s] Execute: [%v]", c.GetName(), c.Data)
 

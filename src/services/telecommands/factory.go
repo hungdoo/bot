@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hungdoo/bot/src/packages/command"
-	"github.com/hungdoo/bot/src/packages/contract"
+	command "github.com/hungdoo/bot/src/packages/command/common"
+	"github.com/hungdoo/bot/src/packages/command/contract"
+	"github.com/hungdoo/bot/src/packages/command/debank"
+	"github.com/hungdoo/bot/src/packages/command/tomb"
 	"github.com/hungdoo/bot/src/packages/db"
-	"github.com/hungdoo/bot/src/packages/debank"
 	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -54,14 +55,14 @@ func NewCommadFactory() CommandFactory {
 	return CommandFactory{commands: map[string]interfaces.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}
 }
 
-func (c *CommandFactory) Add(messages []string) string {
+func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
 	if len(messages) < 2 {
 		return "Add needs at least 2 params"
 	}
 	name := messages[0]
-	data := messages[1:]
+	messages = messages[1:]
 	if v, ok := c.commands[name]; ok {
-		if err := v.SetData(data); err != nil {
+		if err := v.SetData(messages); err != nil {
 			return err.Error()
 		}
 		filter := bson.M{"name": v.GetName()}
@@ -73,13 +74,23 @@ func (c *CommandFactory) Add(messages []string) string {
 	} else {
 		var newCommand interfaces.ICommand
 
-		switch command.IsType(name) {
+		switch cmdType {
 		case command.ContractCall:
 			newCommand = &contract.Command{
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
+					Type:     cmdType,
 					IdleTime: time.Second * 60,
+				},
+			}
+		case command.Tomb:
+			newCommand = &tomb.TombCommand{
+				Command: command.Command{
+					Name:     name,
+					Enabled:  true,
+					Type:     cmdType,
+					IdleTime: time.Minute * 30,
 				},
 			}
 		case command.Debank:
@@ -87,6 +98,7 @@ func (c *CommandFactory) Add(messages []string) string {
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
+					Type:     cmdType,
 					IdleTime: time.Second * 60,
 				},
 			}
@@ -95,10 +107,7 @@ func (c *CommandFactory) Add(messages []string) string {
 			return fmt.Sprintf("Command [%v:%v] failed to add", name, command.IsType(name))
 		}
 
-		if err := newCommand.SetData(data); err != nil {
-			return err.Error()
-		}
-		if err := newCommand.SetType(name); err != nil {
+		if err := newCommand.SetData(messages); err != nil {
 			return err.Error()
 		}
 		if err := db.GetDb().Insert("commands", newCommand.GetUnderlying()); err != nil {
@@ -133,7 +142,7 @@ func (c *CommandFactory) Show(name string) string {
 	return fmt.Sprintf("Command [%v] not found", name)
 }
 
-func (c *CommandFactory) Exec(name string) (res string, err error) {
+func (c *CommandFactory) Exec(name string, subcommand string) (res string, err error) {
 	searchedList := c.commands.Search(name)
 	if len(searchedList) == 0 {
 		return "", fmt.Errorf("command [%v] not found", name)
@@ -141,7 +150,7 @@ func (c *CommandFactory) Exec(name string) (res string, err error) {
 
 	var executed []string
 	for _, cmd := range searchedList {
-		result, err := cmd.Execute(true)
+		result, err := cmd.Execute(true, subcommand)
 		if err != nil {
 			log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
 			continue
@@ -152,15 +161,16 @@ func (c *CommandFactory) Exec(name string) (res string, err error) {
 }
 
 func (c *CommandFactory) List() string {
-	cmdTxt := []string{}
+	enabledCMD := []string{}
+	disabledCMD := []string{}
 	for _, cmd := range c.commands {
 		if cmd.IsEnabled() {
-			cmdTxt = append(cmdTxt, fmt.Sprintf("[+] %v", cmd.GetName()))
+			enabledCMD = append(enabledCMD, fmt.Sprintf("[+] %v", cmd.GetOverview()))
 		} else {
-			cmdTxt = append(cmdTxt, fmt.Sprintf("[-] %v", cmd.GetName()))
+			disabledCMD = append(disabledCMD, fmt.Sprintf("[-] %v", cmd.GetOverview()))
 		}
 	}
-	return strings.Join(cmdTxt, "\n")
+	return strings.Join(append(enabledCMD, disabledCMD...), "\n")
 }
 
 func (c *CommandFactory) On(name string) string {
@@ -223,10 +233,18 @@ func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
 				_command = &contract.Command{
 					Command: cmd,
 				}
+			case command.Tomb:
+				_command = &tomb.TombCommand{
+					Command: cmd,
+				}
+				_command.SetData(_command.GetData())
 			case command.Debank:
 				_command = &debank.Command{
 					Command: cmd,
 				}
+			}
+			if _command == nil {
+				continue
 			}
 			name := cmd.GetName()
 			c.commands[name] = _command

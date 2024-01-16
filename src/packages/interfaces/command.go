@@ -12,15 +12,17 @@ type ICommand interface {
 	SetExecutedTime(newValue time.Time)
 	SetIdleTime(newValue time.Duration)
 	SetEnabled(newValue bool)
-	SetType(name string) error
+	SetError(err error)
 
 	GetPrev() (decimal.Decimal, error)
 	GetName() string
+	GetError() string
+	GetOverview() string
 	GetData() []string
 	GetUnderlying() interface{}
 	IsEnabled() bool
 	IsIdle() bool
 
 	Validate(data []string) error
-	Execute(noCondition bool) (string, error)
+	Execute(noCondition bool, cmd string) (string, error)
 }

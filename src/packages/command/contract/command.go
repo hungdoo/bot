@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/alethio/web3-go/ethrpc"
-	"github.com/hungdoo/bot/src/packages/command"
+	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/math"
 	"github.com/shopspring/decimal"
@@ -34,7 +34,7 @@ func (c *Command) SetData(newValue []string) error {
 	return nil
 }
 
-func (c *Command) Execute(noCondition bool) (string, error) {
+func (c *Command) Execute(noCondition bool, _ string) (string, error) {
 	rpc, contractAddr, method, params, valueIdx, marginStr, precisionStr := c.Data[0], c.Data[1], c.Data[2], c.Data[3], c.Data[4], c.Data[5], c.Data[6]
 	log.GeneralLogger.Printf("[%s] Execute: %v", c.GetName(), c.Data)
 
