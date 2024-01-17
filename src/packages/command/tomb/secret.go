@@ -84,7 +84,7 @@ func LoadSecrets(idx int, key string) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	pk, err := crypto.ToECDSA(decrypted)
+	pk, err := crypto.HexToECDSA(string(decrypted))
 	if err != nil {
 		return nil, err
 	}

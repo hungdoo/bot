@@ -4,3 +4,4 @@ main
 .env.test
 app
 *DS_Store
+TOMB_BACKUP
