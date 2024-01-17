@@ -62,16 +62,18 @@ func (c *Command) GetOverview() string {
 	lastErr := c.GetError()
 
 	if len(lastErr) != 0 {
-		return fmt.Sprintf("%v - %v - %.2fmin ago\nlastErr: %s", c.GetName(), c.Prev, time.Since(c.ExecutedTime).Minutes(), lastErr)
+		return fmt.Sprintf("[%s:%v] - %v - %.2fm\nlastErr: %s", c.Type.String(), c.Name, c.Prev, time.Since(c.ExecutedTime).Minutes(), lastErr)
 	}
-	return fmt.Sprintf("%v - %v - %.2fmin ago", c.GetName(), c.Prev, time.Since(c.ExecutedTime).Minutes())
+	return fmt.Sprintf("[%s:%v] - %v - %.2fm", c.Type.String(), c.Name, c.Prev, time.Since(c.ExecutedTime).Minutes())
 
 }
 func (c *Command) GetType() CommandType {
 	return c.Type
 }
+
+// @dev don't change. need consistency for db access
 func (c *Command) GetName() string {
-	return fmt.Sprintf("%v_%v", c.Name, c.Type.String())
+	return c.Name
 }
 func (c *Command) IsEnabled() bool {
 	return c.Enabled
