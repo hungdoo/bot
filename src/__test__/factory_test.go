@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hungdoo/bot/src/packages/command"
-	"github.com/hungdoo/bot/src/packages/contract"
+	command "github.com/hungdoo/bot/src/packages/command/common"
+	"github.com/hungdoo/bot/src/packages/command/contract"
 	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/services/telecommands"
 	"github.com/shopspring/decimal"
