@@ -210,7 +210,7 @@ func (c *CommandFactory) List() string {
 			disabledCMD = append(disabledCMD, fmt.Sprintf("[-] %v", cmd.GetOverview()))
 		}
 	}
-	return strings.Join(append(enabledCMD, disabledCMD...), "\n")
+	return strings.Join(append(append(enabledCMD, "\n"), disabledCMD...), "\n")
 }
 
 func (c *CommandFactory) On(name string) string {

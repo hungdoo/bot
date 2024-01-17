@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -39,6 +40,9 @@ func (c *Command) SetError(err error) {
 // Getters
 func (c *Command) GetPrev() decimal.Decimal {
 	d := decimal.Zero
+	if len(strings.TrimSpace(c.Prev)) == 0 {
+		return decimal.Zero
+	}
 	err := d.Scan(c.Prev)
 	if err != nil {
 		return decimal.Zero
