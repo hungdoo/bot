@@ -27,7 +27,7 @@ func (c *Command) SetData(newValue []string) error {
 	return nil
 }
 
-func (c *Command) Execute(noCondition bool, _ string) (string, error) {
+func (c *Command) Execute(mustReport bool, _ string) (string, error) {
 	userAddr, offsetStr := c.Data[0], c.Data[1]
 	log.GeneralLogger.Printf("[%s] Execute: [%v]", c.GetName(), c.Data)
 
@@ -45,11 +45,8 @@ func (c *Command) Execute(noCondition bool, _ string) (string, error) {
 		if !offset.IsPositive() {
 			offset = decimal.NewFromInt(50000)
 		}
-		_prev, err := c.GetPrev()
-		if err != nil {
-			log.GeneralLogger.Printf("[%s] execution GetPrev failed: [%s]", c.GetName(), err)
-		}
-		if noCondition {
+		_prev := c.GetPrev()
+		if mustReport {
 			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2)), nil
 		} else if debt.GreaterThan(_prev.Add(offset)) || debt.LessThan(_prev.Sub(offset)) {
 			c.SetPrev(debt)

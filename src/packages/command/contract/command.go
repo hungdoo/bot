@@ -34,7 +34,7 @@ func (c *Command) SetData(newValue []string) error {
 	return nil
 }
 
-func (c *Command) Execute(noCondition bool, _ string) (string, error) {
+func (c *Command) Execute(mustReport bool, _ string) (string, error) {
 	rpc, contractAddr, method, params, valueIdx, marginStr, precisionStr := c.Data[0], c.Data[1], c.Data[2], c.Data[3], c.Data[4], c.Data[5], c.Data[6]
 	log.GeneralLogger.Printf("[%s] Execute: %v", c.GetName(), c.Data)
 
@@ -102,13 +102,10 @@ func (c *Command) Execute(noCondition bool, _ string) (string, error) {
 			margin = decimal.NewFromInt(1)
 		}
 		valueDecimal := decimal.NewFromBigInt(value, 0)
-		_prev, err := c.GetPrev()
-		if err != nil {
-			log.GeneralLogger.Printf("[%s] execution GetPrev failed: [%s]", c.GetName(), err)
-		}
+		_prev := c.GetPrev()
 		_high := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 		_low := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-		if noCondition {
+		if mustReport {
 			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS)), nil
 		} else if valueDecimal.GreaterThan(_high) || valueDecimal.LessThan(_low) {
 			c.SetPrev(valueDecimal)

@@ -1,7 +1,5 @@
 package command
 
-import "strings"
-
 type CommandType int
 
 const (
@@ -9,6 +7,7 @@ const (
 	ContractCall
 	Tomb
 	Debank
+	Balance
 )
 
 func (s CommandType) String() string {
@@ -19,16 +18,9 @@ func (s CommandType) String() string {
 		return "tomb"
 	case Debank:
 		return "debank"
+	case Balance:
+		return "balance"
 	default:
 		return "unknown"
 	}
-}
-
-func IsType(name string) CommandType {
-	for i := ContractCall; i < Debank; i++ {
-		if strings.HasPrefix(strings.ToLower(name), i.String()) {
-			return i
-		}
-	}
-	return Unknown
 }

@@ -22,10 +22,7 @@ func TestFactory(t *testing.T) {
 	}
 	fmt.Println("Before")
 	for _, j := range jobs {
-		_prev, err := j.GetPrev()
-		if err != nil {
-			fmt.Printf("[%s] before GetPrev failed: [%s]", j.GetName(), err)
-		}
+		_prev := j.GetPrev()
 		fmt.Println(_prev)
 		filter := bson.M{"name": j.GetName()}
 		update := bson.M{"$set": bson.M{"prev": decimal.NewFromInt(111111).String()}}
@@ -41,10 +38,7 @@ func TestFactory(t *testing.T) {
 		fmt.Print(err)
 	}
 	for _, j := range jobs {
-		_prev, err := j.GetPrev()
-		if err != nil {
-			fmt.Printf("[%s] before GetPrev failed: [%s]", j.GetName(), err)
-		}
+		_prev := j.GetPrev()
 		fmt.Println(_prev)
 	}
 

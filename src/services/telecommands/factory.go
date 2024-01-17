@@ -7,20 +7,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hungdoo/bot/src/packages/command/balance"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/command/contract"
 	"github.com/hungdoo/bot/src/packages/command/debank"
 	"github.com/hungdoo/bot/src/packages/command/tomb"
 	"github.com/hungdoo/bot/src/packages/db"
-	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type CommandMap map[string]interfaces.ICommand
+type CommandMap map[string]command.ICommand
 
-func (cm *CommandMap) Search(nameSubString string) []interfaces.ICommand {
-	list := make([]interfaces.ICommand, 0)
+func (cm *CommandMap) Search(nameSubString string) []command.ICommand {
+	list := make([]command.ICommand, 0)
 	for _, v := range *cm {
 		if strings.Contains(v.GetName(), nameSubString) {
 			list = append(list, v)
@@ -28,15 +28,24 @@ func (cm *CommandMap) Search(nameSubString string) []interfaces.ICommand {
 	}
 	return list
 }
-func (cm *CommandMap) ToList() []interfaces.ICommand {
-	list := make([]interfaces.ICommand, 0)
+func (cm *CommandMap) ToList() []command.ICommand {
+	list := make([]command.ICommand, 0)
 	for _, v := range *cm {
 		list = append(list, v)
 	}
 	return list
 }
-func (cm *CommandMap) ToActiveList() []interfaces.ICommand {
-	actives := make([]interfaces.ICommand, 0)
+func (cm *CommandMap) Filter(cmdType command.CommandType) *CommandMap {
+	filtered := CommandMap{}
+	for _, v := range *cm {
+		if v.GetType() == cmdType {
+			filtered[v.GetName()] = v
+		}
+	}
+	return &filtered
+}
+func (cm *CommandMap) ToActiveList() []command.ICommand {
+	actives := make([]command.ICommand, 0)
 	for _, v := range *cm {
 		if v.IsEnabled() {
 			actives = append(actives, v)
@@ -52,7 +61,7 @@ type CommandFactory struct {
 }
 
 func NewCommadFactory() CommandFactory {
-	return CommandFactory{commands: map[string]interfaces.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}
+	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}
 }
 
 func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
@@ -72,7 +81,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		}
 		return fmt.Sprintf("Command [%v] updated", name)
 	} else {
-		var newCommand interfaces.ICommand
+		var newCommand command.ICommand
 
 		switch cmdType {
 		case command.ContractCall:
@@ -102,9 +111,18 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 					IdleTime: time.Second * 60,
 				},
 			}
+		case command.Balance:
+			newCommand = &balance.BalanceCommand{
+				Command: command.Command{
+					Name:     name,
+					Enabled:  true,
+					Type:     cmdType,
+					IdleTime: time.Second * 30,
+				},
+			}
 		}
 		if newCommand == nil {
-			return fmt.Sprintf("Command [%v:%v] failed to add", name, command.IsType(name))
+			return fmt.Sprintf("Command [%v] failed to add", name)
 		}
 
 		if err := newCommand.SetData(messages); err != nil {
@@ -142,22 +160,44 @@ func (c *CommandFactory) Show(name string) string {
 	return fmt.Sprintf("Command [%v] not found", name)
 }
 
-func (c *CommandFactory) Exec(name string, subcommand string) (res string, err error) {
-	searchedList := c.commands.Search(name)
-	if len(searchedList) == 0 {
-		return "", fmt.Errorf("command [%v] not found", name)
-	}
-
-	var executed []string
-	for _, cmd := range searchedList {
-		result, err := cmd.Execute(true, subcommand)
-		if err != nil {
-			log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
-			continue
+func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...string) (res string, err error) {
+	filtered := c.commands.Filter(cmdType)
+	switch cmdType {
+	case command.Tomb:
+		subCmd := ""
+		if len(opts) != 0 {
+			subCmd = opts[0]
 		}
-		executed = append(executed, result)
+		searchedList := filtered.Search(task)
+
+		var executed []string
+		for _, cmd := range searchedList {
+			result, err := cmd.Execute(true, subCmd)
+			if err != nil {
+				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
+				executed = append(executed, err.Error())
+				continue
+			}
+			executed = append(executed, result)
+		}
+
+		return string(strings.Join(executed, "\n")), nil
+	default:
+		searchedList := filtered.Search(task)
+
+		var executed []string
+		for _, cmd := range searchedList {
+			result, err := cmd.Execute(true, "")
+			if err != nil {
+				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
+				executed = append(executed, err.Error())
+				continue
+			}
+			executed = append(executed, result)
+		}
+
+		return string(strings.Join(executed, "\n")), nil
 	}
-	return string(strings.Join(executed, "\n")), nil
 }
 
 func (c *CommandFactory) List() string {
@@ -212,7 +252,7 @@ func (c *CommandFactory) SetInterval(name string, interval time.Duration) string
 	return fmt.Sprintf("Command [%v] not found", name)
 }
 
-func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
+func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 	if len(c.commands) == 0 || time.Since(c.lastRefreshedAt) >= c.refreshDbInterval {
 		c.lastRefreshedAt = time.Now()
 
@@ -227,7 +267,7 @@ func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
 			if err := cursor.Decode(&cmd); err != nil {
 				return nil, err
 			}
-			var _command interfaces.ICommand
+			var _command command.ICommand
 			switch cmd.Type {
 			case command.ContractCall:
 				_command = &contract.Command{
@@ -235,6 +275,11 @@ func (c *CommandFactory) GetJobs() ([]interfaces.ICommand, error) {
 				}
 			case command.Tomb:
 				_command = &tomb.TombCommand{
+					Command: cmd,
+				}
+				_command.SetData(_command.GetData())
+			case command.Balance:
+				_command = &balance.BalanceCommand{
 					Command: cmd,
 				}
 				_command.SetData(_command.GetData())

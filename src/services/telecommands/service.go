@@ -57,6 +57,14 @@ func (s *CommandService) RegisterCommands() {
 						return nil
 					},
 				},
+				{
+					Name:      "balance",
+					UsageText: "name, rpc, ...wallets",
+					Action: func(c *cli.Context) error {
+						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.Balance, c.Args()))
+						return nil
+					},
+				},
 			},
 		},
 		{
@@ -93,11 +101,27 @@ func (s *CommandService) RegisterCommands() {
 				{
 					Name: "call",
 					Flags: []cli.Flag{
-						cli.StringFlag{Name: "task,t"},
+						cli.StringFlag{Name: "task,t", Required: true},
 					},
 					Action: func(c *cli.Context) error {
 						task := c.String("task")
-						res, err := s.Factory.Exec(task, "")
+						res, err := s.Factory.Exec(command.ContractCall, task, "")
+						if err != nil {
+							fmt.Fprintln(s.Parser.Writer, err.Error())
+							return err
+						}
+						fmt.Fprintln(s.Parser.Writer, res)
+						return nil
+					},
+				},
+				{
+					Name: "balance",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "task,t", Required: true},
+					},
+					Action: func(c *cli.Context) error {
+						task := c.String("task")
+						res, err := s.Factory.Exec(command.Balance, task, "")
 						if err != nil {
 							fmt.Fprintln(s.Parser.Writer, err.Error())
 							return err
@@ -122,7 +146,7 @@ func (s *CommandService) RegisterCommands() {
 					Action: func(c *cli.Context) error {
 						task := c.String("task")
 						subcommand := c.String("subcommand")
-						res, err := s.Factory.Exec(task, subcommand)
+						res, err := s.Factory.Exec(command.Tomb, task, subcommand)
 						if err != nil {
 							fmt.Fprintln(s.Parser.Writer, err.Error())
 							return err
@@ -187,12 +211,12 @@ func (s *CommandService) RegisterCommands() {
 }
 
 func (c *CommandService) process(message string) string {
-	ret := "No action"
+	var ret string
 	messages := strings.Split(strings.TrimSpace(message), " ")
-	if err := c.Parser.Run(append([]string{"tele"}, messages...)); err != nil {
-		ret = err.Error()
-	} else {
-		ret = cmdparser.GetOutput()
+	err := c.Parser.Run(append([]string{"tele"}, messages...))
+	ret = cmdparser.GetOutput()
+	if err != nil {
+		ret = fmt.Sprintf("%v[err:%v]", ret, err)
 	}
 	log.GeneralLogger.Printf("Process message[%s] & ret[%s]\n", message, ret)
 	return ret
@@ -208,6 +232,7 @@ func (c *CommandService) Work() {
 		var results []string
 		for _, j := range jobs {
 			if !j.IsIdle() {
+				j.SetError(nil)
 				result, err := j.Execute(false, "")
 				j.SetExecutedTime(time.Now())
 				if err != nil {
@@ -216,11 +241,7 @@ func (c *CommandService) Work() {
 					continue
 				}
 				// exec seccessfully -> update prev in db
-				_prev, err := j.GetPrev()
-				if err != nil {
-					log.GeneralLogger.Printf("[%s] Work - GetPrev failed: [%s]", j.GetName(), err)
-					continue
-				}
+				_prev := j.GetPrev()
 				filter := bson.M{"name": j.GetName()}
 				update := bson.M{"$set": bson.M{"prev": _prev.String()}}
 				if err := db.GetDb().Update("commands", filter, update); err != nil {

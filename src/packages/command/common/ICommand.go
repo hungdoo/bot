@@ -1,4 +1,4 @@
-package interfaces
+package command
 
 import (
 	"time"
@@ -14,8 +14,9 @@ type ICommand interface {
 	SetEnabled(newValue bool)
 	SetError(err error)
 
-	GetPrev() (decimal.Decimal, error)
+	GetPrev() decimal.Decimal
 	GetName() string
+	GetType() CommandType
 	GetError() string
 	GetOverview() string
 	GetData() []string
@@ -24,5 +25,5 @@ type ICommand interface {
 	IsIdle() bool
 
 	Validate(data []string) error
-	Execute(noCondition bool, cmd string) (string, error)
+	Execute(mustReport bool, cmd string) (string, error)
 }
