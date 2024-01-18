@@ -15,5 +15,5 @@ func main() {
 	commandService := telecommands.NewService()
 	commandService.RegisterCommands()
 	go commandService.Work()
-	commandService.Run()
+	commandService.ListenToCommand()
 }

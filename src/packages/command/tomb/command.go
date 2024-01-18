@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/tombplus"
 	"github.com/shopspring/decimal"
@@ -45,19 +46,19 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 	return nil
 }
 
-func (c *TombCommand) Execute(_ bool, subcommand string) (string, error) {
-	contractAddress := common.HexToAddress(c.Contract)
+func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorWithSeverity) {
+	contractAddress := ethCommon.HexToAddress(c.Contract)
 	cli, err := tombplus.GetClient(c.Rpc, contractAddress)
 	if err != nil {
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	pk, err := LoadSecrets(int(c.PkIdx), c.key)
 	if err != nil {
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	user, err := tombplus.AddressFromPriKey(pk)
 	if err != nil {
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	switch subcommand {
@@ -66,7 +67,7 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, error) {
 		lastVotedEpoch := c.Prev
 		isVoted, err := cli.IsVotedAtEpoch(user, currentEpoch)
 		if err != nil {
-			return "", err
+			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
 		max := cli.MaxAllowedFutureFlips()
 		return fmt.Sprintf("cur-isVoted-lastVoted-maxFuture: %v-%v-%v-%v", currentEpoch, isVoted, lastVotedEpoch, max), nil
@@ -74,7 +75,7 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, error) {
 	case "claim":
 		res, err := cli.Claim(pk)
 		if err != nil {
-			return "", err
+			return "", common.NewErrorWithSeverity(common.Critical, err.Error())
 		}
 		return res, nil
 
@@ -82,28 +83,28 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, error) {
 	default:
 		gameStarted := cli.GameStarted()
 		if !gameStarted {
-			return "", fmt.Errorf("game not started")
+			return "", common.NewErrorWithSeverity(common.Error, "game not started")
 		}
 		currentEpoch := cli.CurrentEpoch()
 		voted, err := cli.IsVotedAtEpoch(user, currentEpoch)
 		if err != nil {
-			return "", err
+			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
 		if voted {
-			return "", fmt.Errorf("glready Voted")
+			return "", common.NewErrorWithSeverity(common.Error, "already Voted")
 		}
 		maxFutureFlips := cli.MaxAllowedFutureFlips()
-		var res string
-		if maxFutureFlips > 0 {
-			res, err = cli.Flipmultiple(pk, currentEpoch, maxFutureFlips-1, c.Up)
-			if err != nil {
-				return "", err
-			}
-			// last voted epoch (could be in the future)
-			// for reporting only
-			c.SetPrev(decimal.NewFromInt(currentEpoch + maxFutureFlips - 1))
+		if maxFutureFlips <= 0 {
+			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
 		}
+		res, errWithSeverity := cli.Flipmultiple(pk, currentEpoch, maxFutureFlips-1, c.Up)
+		if errWithSeverity != nil {
+			return "", errWithSeverity
+		}
+		// last voted epoch (could be in the future)
+		// for reporting only
+		c.SetPrev(decimal.NewFromInt(currentEpoch + maxFutureFlips - 1))
 		return res, nil
 	}
-	return "", nil
+	return "", common.NewErrorWithSeverity(common.Info, "no action")
 }

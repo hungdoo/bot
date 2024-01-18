@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alethio/web3-go/ethrpc"
+	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/math"
@@ -34,14 +35,14 @@ func (c *Command) SetData(newValue []string) error {
 	return nil
 }
 
-func (c *Command) Execute(mustReport bool, _ string) (string, error) {
+func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithSeverity) {
 	rpc, contractAddr, method, params, valueIdx, marginStr, precisionStr := c.Data[0], c.Data[1], c.Data[2], c.Data[3], c.Data[4], c.Data[5], c.Data[6]
 	log.GeneralLogger.Printf("[%s] Execute: %v", c.GetName(), c.Data)
 
 	eth, err := GetETH(rpc)
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	args := []interface{}{}
@@ -60,40 +61,40 @@ func (c *Command) Execute(mustReport bool, _ string) (string, error) {
 	packed, err := vc.CallData()
 	if err != nil {
 		log.ErrorLogger.Printf("CallData Err: %v-%v", vc, err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	res, err := eth.CallContractFunction("0x"+hex.EncodeToString(packed), contractAddr, ethrpc.DefaultCallGas)
 	if err != nil {
 		log.ErrorLogger.Printf("CallContractFunction Err: %v-%v", vc, err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	bytes, err := hex.DecodeString(strings.TrimPrefix(res, "0x"))
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	values, err := vc.Decode(bytes)
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	valueIndex, err := strconv.ParseInt(valueIdx, 10, 0)
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	margin, err := decimal.NewFromString(marginStr)
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	precision, err := strconv.ParseInt(precisionStr, 10, 0)
 	if err != nil {
 		log.ErrorLogger.Printf("Err: %v", err)
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	if value, ok := values[valueIndex].(*big.Int); ok {
@@ -115,7 +116,7 @@ func (c *Command) Execute(mustReport bool, _ string) (string, error) {
 			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newLow, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newHigh, int32(precision), DECIMAL_POINTS)), nil
 		}
 	} else {
-		return "", fmt.Errorf("cannot parse value [%v]", values...)
+		return "", common.NewErrorWithSeverity(common.Error, fmt.Sprintf("cannot parse value [%v]", values...))
 	}
 	return "", nil
 }

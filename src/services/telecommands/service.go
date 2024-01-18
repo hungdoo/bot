@@ -19,6 +19,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// @dev external facing controller
+// Responsibility: listen to command from tele, executes & reports
 type CommandService struct {
 	interfaces.IService
 	Factory CommandFactory
@@ -262,7 +264,7 @@ func (c *CommandService) Work() {
 	}
 }
 
-func (c *CommandService) Run() error {
+func (c *CommandService) ListenToCommand() error {
 	telegramUpdateChan, err := telegram.GetUpdates()
 	if err != nil {
 		return fmt.Errorf("%v", err.Error())

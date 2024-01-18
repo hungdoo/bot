@@ -5,15 +5,16 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/shopspring/decimal"
 )
 
 type Wallet struct {
-	Address    common.Address
+	Address    ethCommon.Address
 	PreBalance decimal.Decimal
 }
 type BalanceCommand struct {
@@ -39,7 +40,7 @@ func (c *BalanceCommand) SetData(newValue []string) (err error) {
 		c.Wallets = append(
 			c.Wallets,
 			Wallet{
-				Address:    common.HexToAddress(v),
+				Address:    ethCommon.HexToAddress(v),
 				PreBalance: decimal.Zero,
 			},
 		)
@@ -47,10 +48,10 @@ func (c *BalanceCommand) SetData(newValue []string) (err error) {
 	return nil
 }
 
-func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, error) {
+func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *common.ErrorWithSeverity) {
 	rpcCli, err := rpc.Dial(c.Rpc)
 	if err != nil {
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	// Create a batch of RPC calls to get the balance of each address
@@ -69,7 +70,7 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, er
 	// Execute the batch call
 	err = rpcCli.BatchCall(batch)
 	if err != nil {
-		return "", err
+		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	// Process the results
@@ -96,10 +97,10 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, er
 		}
 
 		balance := decimal.NewFromBigInt(decimalValue, 0)
-		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, balance.Div(decimal.NewFromBigInt(common.Big1, 18)).InexactFloat64())
+		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64())
 		if mustReport || !mustReport && !balance.Equal(wallet.PreBalance) {
 			c.Wallets[i].PreBalance = balance
-			results = append(results, fmt.Sprintf("%s[%.5f]\n", wallet.Address, balance.Div(decimal.NewFromBigInt(common.Big1, 18)).InexactFloat64()))
+			results = append(results, fmt.Sprintf("%s[%.5f]\n", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64()))
 		}
 	}
 

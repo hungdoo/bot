@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hungdoo/bot/src/common"
 	"github.com/hungdoo/bot/src/packages/command/balance"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/command/contract"
@@ -54,6 +55,8 @@ func (cm *CommandMap) ToActiveList() []command.ICommand {
 	return actives
 }
 
+// @dev internal facing controller
+// Responsibility: validates, processes commands & handles errors
 type CommandFactory struct {
 	commands          CommandMap
 	lastRefreshedAt   time.Time
@@ -175,7 +178,11 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			result, err := cmd.Execute(true, subCmd)
 			if err != nil {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
-				executed = append(executed, err.Error())
+				if err.Level == common.Critical {
+					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), err.Error()))
+				} else {
+					executed = append(executed, err.Error())
+				}
 				continue
 			}
 			executed = append(executed, result)
@@ -190,7 +197,11 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			result, err := cmd.Execute(true, "")
 			if err != nil {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
-				executed = append(executed, err.Error())
+				if err.Level == common.Critical {
+					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), err.Error()))
+				} else {
+					executed = append(executed, err.Error())
+				}
 				continue
 			}
 			executed = append(executed, result)

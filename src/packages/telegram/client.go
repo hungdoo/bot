@@ -36,6 +36,7 @@ func ReportInvalidAccess(fromUser string) {
 	msg := tgbotapi.NewMessage(chatId, fmt.Sprintf("[!!]Access from invalid user [%s]", fromUser))
 
 	GetBot().Send(msg)
+	time.Sleep(time.Millisecond * 500)
 }
 
 func GetBot() *tgbotapi.BotAPI {

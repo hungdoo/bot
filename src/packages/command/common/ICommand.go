@@ -3,6 +3,7 @@ package command
 import (
 	"time"
 
+	"github.com/hungdoo/bot/src/common"
 	"github.com/shopspring/decimal"
 )
 
@@ -25,5 +26,5 @@ type ICommand interface {
 	IsIdle() bool
 
 	Validate(data []string) error
-	Execute(mustReport bool, cmd string) (string, error)
+	Execute(mustReport bool, cmd string) (string, *common.ErrorWithSeverity)
 }
