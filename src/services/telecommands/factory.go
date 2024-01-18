@@ -175,10 +175,10 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 
 		var executed []string
 		for _, cmd := range searchedList {
-			result, err := cmd.Execute(true, subCmd)
-			if err != nil {
+			result, execErr := cmd.Execute(true, subCmd)
+			if execErr.Level >= common.Error {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
-				if err.Level == common.Critical {
+				if execErr.Level == common.Critical {
 					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), err.Error()))
 				} else {
 					executed = append(executed, err.Error())
@@ -197,10 +197,10 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 
 		var executed []string
 		for _, cmd := range searchedList {
-			result, err := cmd.Execute(true, "")
-			if err != nil {
+			result, execErr := cmd.Execute(true, "")
+			if execErr.Level >= common.Error {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), err)
-				if err.Level == common.Critical {
+				if execErr.Level == common.Critical {
 					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), err.Error()))
 				} else {
 					executed = append(executed, err.Error())
