@@ -17,10 +17,14 @@ type Command struct {
 	IdleTime     time.Duration `bson:"idletime"`
 	Enabled      bool          `bson:"enabled"`
 	Prev         string        `bson:"prev"`
+	DisplayMsg   string        `bson:"-"`
 	Error        error         `bson:"-"`
 }
 
 // Setters
+func (c *Command) SetDisplayMsg(msg string) {
+	c.DisplayMsg = msg
+}
 func (c *Command) SetPrev(newValue decimal.Decimal) {
 	c.Prev = newValue.String()
 }
@@ -62,9 +66,9 @@ func (c *Command) GetOverview() string {
 	lastErr := c.GetError()
 
 	if len(lastErr) != 0 {
-		return fmt.Sprintf("[%s:%v] - %v - %.2fm\nlastErr: %s", c.Type.String(), c.Name, c.Prev, time.Since(c.ExecutedTime).Minutes(), lastErr)
+		return fmt.Sprintf("[%s:%v] - %v - %.2fm\nlastErr: %s", c.Type.String(), c.Name, c.GetDisplayMsg(), time.Since(c.ExecutedTime).Minutes(), lastErr)
 	}
-	return fmt.Sprintf("[%s:%v] - %v - %.2fm", c.Type.String(), c.Name, c.Prev, time.Since(c.ExecutedTime).Minutes())
+	return fmt.Sprintf("[%s:%v] - %v - %.2fm", c.Type.String(), c.Name, c.GetDisplayMsg(), time.Since(c.ExecutedTime).Minutes())
 
 }
 func (c *Command) GetType() CommandType {
@@ -72,6 +76,9 @@ func (c *Command) GetType() CommandType {
 }
 
 // @dev don't change. need consistency for db access
+func (c *Command) GetDisplayMsg() string {
+	return c.DisplayMsg
+}
 func (c *Command) GetName() string {
 	return c.Name
 }

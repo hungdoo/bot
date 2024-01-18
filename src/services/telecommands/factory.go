@@ -64,7 +64,7 @@ type CommandFactory struct {
 }
 
 func NewCommadFactory() CommandFactory {
-	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Minute}
+	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Hour}
 }
 
 func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
@@ -185,7 +185,10 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				}
 				continue
 			}
-			executed = append(executed, result)
+			if result != "" {
+				cmd.SetDisplayMsg(result)
+				executed = append(executed, fmt.Sprintf("job [%s] result: %s", cmd.GetName(), result))
+			}
 		}
 
 		return string(strings.Join(executed, "\n")), nil
@@ -204,7 +207,10 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				}
 				continue
 			}
-			executed = append(executed, result)
+			if result != "" {
+				cmd.SetDisplayMsg(result)
+				executed = append(executed, fmt.Sprintf("job [%s] result: %s", cmd.GetName(), result))
+			}
 		}
 
 		return string(strings.Join(executed, "\n")), nil

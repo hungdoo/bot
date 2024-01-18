@@ -251,7 +251,8 @@ func (c *CommandService) Work() {
 					continue
 				}
 				if result != "" {
-					results = append(results, result)
+					j.SetDisplayMsg(result)
+					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
 				}
 			}
 		}

@@ -14,8 +14,10 @@ type ICommand interface {
 	SetIdleTime(newValue time.Duration)
 	SetEnabled(newValue bool)
 	SetError(err error)
+	SetDisplayMsg(msg string)
 
 	GetPrev() decimal.Decimal
+	GetDisplayMsg() string
 	GetName() string
 	GetType() CommandType
 	GetError() string

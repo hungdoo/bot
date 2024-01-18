@@ -74,7 +74,7 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 	}
 
 	// Process the results
-	results := []string{c.GetName()}
+	results := []string{}
 	var errors []string
 	for i, call := range batch {
 		wallet := c.Wallets[i]
@@ -100,7 +100,9 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64())
 		if mustReport || !mustReport && !balance.Equal(wallet.PreBalance) {
 			c.Wallets[i].PreBalance = balance
-			results = append(results, fmt.Sprintf("%s[%.5f]\n", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64()))
+			results = append(results, fmt.Sprintf("%s[P:%.5f|V:%.5f]\n", wallet.Address,
+				wallet.PreBalance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64(),
+				balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64()))
 		}
 	}
 
