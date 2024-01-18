@@ -246,8 +246,8 @@ func (c *CommandService) Work() {
 				}
 
 				// record result & info error for logging with tele.List cmd, no realtime report
-				if result != "" || execErr.Level < common.Error {
-					j.SetDisplayMsg(fmt.Sprintf("result: %s | err: %s", result, execErr.Error()))
+				if result != "" {
+					j.SetDisplayMsg(result)
 					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
 				}
 				// exec seccessfully -> update prev in db
