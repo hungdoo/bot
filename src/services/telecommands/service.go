@@ -239,7 +239,7 @@ func (c *CommandService) Work() {
 				result, execErr := j.Execute(false, "")
 				log.GeneralLogger.Printf("[%s] execution result: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
-				if execErr.Level >= common.Error {
+				if execErr != nil && execErr.Level >= common.Error {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
 					j.SetError(err)
 					continue
