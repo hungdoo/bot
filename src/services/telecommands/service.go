@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/hungdoo/bot/src/common"
 	"github.com/hungdoo/bot/src/packages/cmdparser"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/db"
@@ -235,24 +236,26 @@ func (c *CommandService) Work() {
 		for _, j := range jobs {
 			if !j.IsIdle() {
 				j.SetError(nil)
-				result, err := j.Execute(false, "")
+				result, execErr := j.Execute(false, "")
+				log.GeneralLogger.Printf("[%s] execution result: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
-				if err != nil {
+				if execErr.Level >= common.Error {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
 					j.SetError(err)
 					continue
 				}
+
+				// record result & info error for logging with tele.List cmd, no realtime report
+				if result != "" || execErr.Level < common.Error {
+					j.SetDisplayMsg(fmt.Sprintf("result: %s | err: %s", result, execErr.Error()))
+					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
+				}
 				// exec seccessfully -> update prev in db
-				_prev := j.GetPrev()
 				filter := bson.M{"name": j.GetName()}
-				update := bson.M{"$set": bson.M{"prev": _prev.String()}}
+				update := bson.M{"$set": bson.M{"prev": j.GetPrev().String(), "display_msg": j.GetDisplayMsg()}}
 				if err := db.GetDb().Update("commands", filter, update); err != nil {
 					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
 					continue
-				}
-				if result != "" {
-					j.SetDisplayMsg(result)
-					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
 				}
 			}
 		}

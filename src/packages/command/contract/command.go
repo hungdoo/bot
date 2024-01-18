@@ -98,7 +98,6 @@ func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithS
 	}
 
 	if value, ok := values[valueIndex].(*big.Int); ok {
-		log.GeneralLogger.Printf("[%s] execution result: [%s]", c.GetName(), value)
 		if !margin.IsPositive() {
 			margin = decimal.NewFromInt(1)
 		}
@@ -115,8 +114,8 @@ func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithS
 			newLow := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
 			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newLow, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newHigh, int32(precision), DECIMAL_POINTS)), nil
 		}
+		return "", common.NewErrorWithSeverity(common.Info, fmt.Sprintf("no report for result [%v]", value))
 	} else {
 		return "", common.NewErrorWithSeverity(common.Error, fmt.Sprintf("cannot parse value [%v]", values...))
 	}
-	return "", nil
 }

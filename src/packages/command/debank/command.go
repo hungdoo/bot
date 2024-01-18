@@ -42,7 +42,6 @@ func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithS
 	}
 
 	if debt.IsPositive() {
-		log.GeneralLogger.Printf("[%s] execution result: [%s]", c.GetName(), debt)
 		if !offset.IsPositive() {
 			offset = decimal.NewFromInt(50000)
 		}
@@ -54,5 +53,5 @@ func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithS
 			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(debt, 0, 2), math.ShortenDecimal(_prev, 0, 2), math.ShortenDecimal(_prev.Sub(offset), 0, 2), math.ShortenDecimal(_prev.Add(offset), 0, 2)), nil
 		}
 	}
-	return "", nil
+	return "", common.NewErrorWithSeverity(common.Info, fmt.Sprintf("no report for debt [%v]", debt))
 }

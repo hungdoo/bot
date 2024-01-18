@@ -13,11 +13,11 @@ type Command struct {
 	Name         string        `bson:"name"`
 	Type         CommandType   `json:"-" bson:"type"`
 	Data         []string      `bson:"data"`
-	ExecutedTime time.Time     `bson:"executedtime"`
+	ExecutedTime time.Time     `bson:"executed_time"`
 	IdleTime     time.Duration `bson:"idletime"`
 	Enabled      bool          `bson:"enabled"`
 	Prev         string        `bson:"prev"`
-	DisplayMsg   string        `bson:"-"`
+	DisplayMsg   string        `bson:"display_msg"`
 	Error        error         `bson:"-"`
 }
 
