@@ -86,13 +86,13 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		// Assert the type to string
 		resultString, ok := call.Result.(*string)
 		if !ok {
-			errors = append(errors, fmt.Sprintf("Unexpected result type for address %s", wallet.Address))
+			errors = append(errors, fmt.Sprintf("unexpected result type for address %s", wallet.Address))
 			continue
 		}
 
 		decimalValue, success := new(big.Int).SetString(*resultString, 0)
 		if !success {
-			errors = append(errors, fmt.Sprintf("Error converting balance for address %s: %v", wallet.Address, resultString))
+			errors = append(errors, fmt.Sprintf("error converting balance for address %s: %v", wallet.Address, resultString))
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64())
 		if mustReport || !mustReport && !balance.Equal(wallet.PreBalance) {
 			c.Wallets[i].PreBalance = balance
-			results = append(results, fmt.Sprintf("%s[P:%.5f|V:%.5f]\n", wallet.Address,
+			results = append(results, fmt.Sprintf("\n%s[P:%.5f|V:%.5f]", wallet.Address,
 				wallet.PreBalance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64(),
 				balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64()))
 		}
@@ -110,5 +110,5 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		log.GeneralLogger.Printf("%s", strings.Join(errors, "\n"))
 		c.SetError(fmt.Errorf("%s", strings.Join(errors, "\n")))
 	}
-	return strings.Join(results, "\n"), nil
+	return strings.Join(results, ""), nil
 }

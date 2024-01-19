@@ -27,9 +27,12 @@ func IsWhitelisted(userName string) bool {
 	return allowed
 }
 
-func ReportInvalidAccess(fromUser string) {
+func GetReportChatId() (int64, error) {
 	reportChatId := dotenv.GetEnv("REPORT_CHAT_ID")
-	chatId, err := strconv.ParseInt(reportChatId, 10, 64)
+	return strconv.ParseInt(reportChatId, 10, 64)
+}
+func ReportInvalidAccess(fromUser string) {
+	chatId, err := GetReportChatId()
 	if err != nil {
 		return
 	}

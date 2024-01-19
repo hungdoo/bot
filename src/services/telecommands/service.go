@@ -25,7 +25,6 @@ import (
 type CommandService struct {
 	interfaces.IService
 	Factory CommandFactory
-	ChatID  int64
 	Parser  *cli.App
 }
 
@@ -255,12 +254,15 @@ func (c *CommandService) Work() {
 				update := bson.M{"$set": bson.M{"prev": j.GetPrev().String(), "display_msg": j.GetDisplayMsg()}}
 				if err := db.GetDb().Update("commands", filter, update); err != nil {
 					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
-					continue
 				}
 			}
 		}
 		if len(results) != 0 {
-			msg := tgbotapi.NewMessage(c.ChatID, strings.Join(results, "\n"))
+			reportChatId, err := telegram.GetReportChatId()
+			if err != nil {
+				log.GeneralLogger.Printf("[work] get report id failed: [%s]", err)
+			}
+			msg := tgbotapi.NewMessage(reportChatId, strings.Join(results, "\n"))
 			msg.ParseMode = ""
 			telegram.GetBot().Send(msg)
 		}
@@ -279,21 +281,21 @@ func (c *CommandService) ListenToCommand() error {
 		}
 
 		fromUser := update.Message.From.UserName
-		userChatId := update.Message.Chat.ID
+
 		if !telegram.IsWhitelisted(fromUser) {
 			telegram.ReportInvalidAccess(fromUser)
 			continue
 		}
-
-		log.GeneralLogger.Printf("[%s:%d] %s", fromUser, userChatId, update.Message.Text)
-		msg := tgbotapi.NewMessage(userChatId, c.process(update.Message.Text))
+		reportChatId, err := telegram.GetReportChatId()
+		if err != nil {
+			log.ErrorLogger.Print(err)
+		}
+		log.GeneralLogger.Printf("[%s:%d] %s", fromUser, reportChatId, update.Message.Text)
+		msg := tgbotapi.NewMessage(reportChatId, c.process(update.Message.Text))
 		msg.ReplyToMessageID = update.Message.MessageID
 		msg.ParseMode = ""
 
 		telegram.GetBot().Send(msg)
-		if c.ChatID == 0 {
-			c.ChatID = userChatId
-		}
 	}
 	return nil
 }

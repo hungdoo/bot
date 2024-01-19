@@ -106,13 +106,13 @@ func (c *Command) Execute(mustReport bool, _ string) (string, *common.ErrorWithS
 		_high := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 		_low := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
 		if mustReport {
-			return fmt.Sprintf("%v\nV:%v | Pre: %v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS)), nil
+			return fmt.Sprintf("V:%v | Pre: %v", math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS)), nil
 		} else if valueDecimal.GreaterThan(_high) || valueDecimal.LessThan(_low) {
 			c.SetPrev(valueDecimal)
 
 			newHigh := _prev.Mul(decimal.NewFromInt(100).Add(margin)).Div(decimal.NewFromInt(100))
 			newLow := _prev.Mul(decimal.NewFromInt(100).Sub(margin)).Div(decimal.NewFromInt(100))
-			return fmt.Sprintf("%v\nV:%v | Pre: %v | L:%v | H:%v", c.Name, math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newLow, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newHigh, int32(precision), DECIMAL_POINTS)), nil
+			return fmt.Sprintf("V:%v | Pre: %v | L:%v | H:%v", math.ShortenDecimal(valueDecimal, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(_prev, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newLow, int32(precision), DECIMAL_POINTS), math.ShortenDecimal(newHigh, int32(precision), DECIMAL_POINTS)), nil
 		}
 		return "", common.NewErrorWithSeverity(common.Info, fmt.Sprintf("no report for result [%v]", value))
 	} else {
