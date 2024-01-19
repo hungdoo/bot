@@ -48,7 +48,7 @@ func teardown() {
 }
 
 func TestFlipmultiple(t *testing.T) {
-	result, err := tombplusCli.Flipmultiple(pk, 0, 8, true)
+	result, err := tombplusCli.Flipmultiple(pk, 8, true)
 	if err != nil {
 		t.Fatal(err)
 	}

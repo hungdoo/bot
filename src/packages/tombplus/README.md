@@ -4,7 +4,7 @@ cd /Users/hungdong/go/pkg/mod/github.com/ethereum/go-ethereum@v1.13.10/
 make
 make devtools
 
-abigen --abi src/packages/transaction/abi/tombplus.json  --pkg tombplus --out TombPlus.go
+abigen --abi src/packages/tombplus/abi/tombplus.json  --pkg tombplus --out src/packages/tombplus/TombPlus.go
 
 ```go
   // Instantiate the contract with the deployment address and the client

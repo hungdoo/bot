@@ -97,13 +97,13 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		if maxFutureFlips <= 0 {
 			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
 		}
-		res, errWithSeverity := cli.Flipmultiple(pk, currentEpoch, maxFutureFlips-1, c.Up)
+		res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips, c.Up)
 		if errWithSeverity != nil {
 			return "", errWithSeverity
 		}
 		// last voted epoch (could be in the future)
 		// for reporting only
-		c.SetPrev(decimal.NewFromInt(currentEpoch + maxFutureFlips - 1))
+		c.SetPrev(decimal.NewFromInt(currentEpoch + maxFutureFlips))
 		return res, nil
 	}
 	return "", common.NewErrorWithSeverity(common.Info, "no action")

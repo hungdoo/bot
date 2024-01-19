@@ -62,7 +62,7 @@ func (c *TombplusClient) GameStarted() bool {
 }
 
 func (c *TombplusClient) CurrentEpoch() int64 {
-	epochNum, err := c.tomb.EpochNumber(&bind.CallOpts{})
+	epochNum, err := c.tomb.CurrentEpochId(&bind.CallOpts{})
 	if err != nil {
 		return -1
 	}
@@ -91,20 +91,18 @@ func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (string, *common.Er
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
-func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, fromEpoch int64, epochs int64, up bool) (string, *common.ErrorWithSeverity) {
+func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64, up bool) (string, *common.ErrorWithSeverity) {
 	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
 	if err != nil {
 		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
-	epochIds := make([]*big.Int, epochs)
 	ups := make([]bool, epochs)
 	for i := int64(0); i < epochs; i++ {
-		epochIds[i] = big.NewInt(fromEpoch + i)
 		ups[i] = up
 	}
 
-	signedTx, err := c.tomb.FlipMultiple(noSendOpts, epochIds, ups)
+	signedTx, err := c.tomb.FlipMultiple(noSendOpts, ups)
 	if err != nil {
 		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
