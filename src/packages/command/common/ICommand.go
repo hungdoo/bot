@@ -13,7 +13,7 @@ type ICommand interface {
 	SetExecutedTime(newValue time.Time)
 	SetIdleTime(newValue time.Duration)
 	SetEnabled(newValue bool)
-	SetError(err error)
+	SetError(err string)
 	SetDisplayMsg(msg string)
 
 	GetPrev() decimal.Decimal

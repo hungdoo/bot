@@ -234,13 +234,13 @@ func (c *CommandService) Work() {
 		var results []string
 		for _, j := range jobs {
 			if !j.IsIdle() {
-				j.SetError(nil)
+				j.SetError("")
 				result, execErr := j.Execute(false, "")
 				log.GeneralLogger.Printf("[%s] execution result: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
 				if execErr != nil && execErr.Level >= common.Error {
-					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), err)
-					j.SetError(err)
+					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), execErr.Error())
+					j.SetError(execErr.Error())
 					continue
 				}
 

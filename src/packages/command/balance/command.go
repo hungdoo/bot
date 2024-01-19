@@ -108,7 +108,7 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 
 	if len(errors) != 0 {
 		log.GeneralLogger.Printf("%s", strings.Join(errors, "\n"))
-		c.SetError(fmt.Errorf("%s", strings.Join(errors, "\n")))
+		c.SetError(strings.Join(errors, "\n"))
 	}
 	return strings.Join(results, ""), nil
 }

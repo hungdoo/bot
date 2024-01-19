@@ -18,7 +18,7 @@ type Command struct {
 	Enabled      bool          `bson:"enabled"`
 	Prev         string        `bson:"prev"`
 	DisplayMsg   string        `bson:"display_msg"`
-	Error        error         `bson:"-"`
+	Error        string        `bson:"error"`
 }
 
 // Setters
@@ -37,7 +37,7 @@ func (c *Command) SetExecutedTime(newValue time.Time) {
 func (c *Command) SetIdleTime(newValue time.Duration) {
 	c.IdleTime = newValue
 }
-func (c *Command) SetError(err error) {
+func (c *Command) SetError(err string) {
 	c.Error = err
 }
 
@@ -57,10 +57,7 @@ func (c *Command) GetData() []string {
 	return c.Data
 }
 func (c *Command) GetError() string {
-	if c.Error != nil {
-		return c.Error.Error()
-	}
-	return ""
+	return c.Error
 }
 func (c *Command) GetOverview() string {
 	lastErr := c.GetError()
