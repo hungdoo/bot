@@ -63,7 +63,7 @@ type CommandFactory struct {
 	refreshDbInterval time.Duration
 }
 
-func NewCommadFactory() CommandFactory {
+func NewCommandFactory() CommandFactory {
 	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Hour}
 }
 
@@ -89,6 +89,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		switch cmdType {
 		case command.ContractCall:
 			newCommand = &contract.Command{
+				Id: name,
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
@@ -98,6 +99,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			}
 		case command.Tomb:
 			newCommand = &tomb.TombCommand{
+				Id: name,
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
@@ -107,6 +109,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			}
 		case command.Debank:
 			newCommand = &debank.Command{
+				Id: name,
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
@@ -116,6 +119,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			}
 		case command.Balance:
 			newCommand = &balance.BalanceCommand{
+				Id: name,
 				Command: command.Command{
 					Name:     name,
 					Enabled:  true,
@@ -131,7 +135,8 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		if err := newCommand.SetData(messages); err != nil {
 			return err.Error()
 		}
-		if err := db.GetDb().Insert("commands", newCommand.GetUnderlying()); err != nil {
+
+		if err := db.GetDb().Insert("commands", newCommand); err != nil {
 			return err.Error()
 		}
 		c.commands[name] = newCommand
@@ -280,35 +285,49 @@ func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 		defer cursor.Close(context.TODO())
 
 		for cursor.Next(context.TODO()) {
-			cmd := command.Command{}
-			if err := cursor.Decode(&cmd); err != nil {
+			// cmd := command.Command{}
+			var result bson.M
+			if err := cursor.Decode(&result); err != nil {
 				return nil, err
 			}
-			var _command command.ICommand
+
+			// Unmarshal the BSON document into the custom command object
+			// Convert the result map to BSON representation
+			resultBytes, err := bson.Marshal(result)
+			if err != nil {
+				return nil, err
+			}
+
+			cmd := &command.CustomCommand{}
+			err = bson.Unmarshal(resultBytes, cmd)
+			if err != nil {
+				return nil, err
+			}
+
+			var iCmd interface{}
 			switch cmd.Type {
 			case command.ContractCall:
-				_command = &contract.Command{
-					Command: cmd,
-				}
+				iCmd = &contract.Command{}
 			case command.Tomb:
-				_command = &tomb.TombCommand{
-					Command: cmd,
-				}
-				_command.SetData(_command.GetData())
+				iCmd = &tomb.TombCommand{}
 			case command.Balance:
-				_command = &balance.BalanceCommand{
-					Command: cmd,
-				}
-				_command.SetData(_command.GetData())
+				iCmd = &balance.BalanceCommand{}
 			case command.Debank:
-				_command = &debank.Command{
-					Command: cmd,
-				}
-			}
-			if _command == nil {
+				iCmd = &debank.Command{}
+			default:
+				log.GeneralLogger.Printf("unsupported cmd[%+v] ", cmd)
 				continue
 			}
-			name := cmd.GetName()
+			err = bson.Unmarshal(resultBytes, iCmd)
+			if err != nil {
+				return nil, err
+			}
+
+			_command, ok := iCmd.(command.ICommand)
+			if !ok {
+				return nil, fmt.Errorf("cannot typecast cmd[%v] to ICommand", cmd)
+			}
+			name := _command.GetName()
 			c.commands[name] = _command
 			log.GeneralLogger.Printf("Loaded Command [%v]\n", name)
 		}

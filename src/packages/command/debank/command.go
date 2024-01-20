@@ -12,6 +12,7 @@ import (
 
 type Command struct {
 	command.Command
+	Id string `bson:"_id,unique"`
 }
 
 func (c *Command) Validate(data []string) error {

@@ -1,7 +1,6 @@
 package command
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +10,7 @@ import (
 
 type Command struct {
 	ICommand     `json:"-" bson:"-"`
-	Name         string        `json:"name" bson:"name"`
+	Name         string        `json:"name" bson:"name,omitempty"`
 	Type         CommandType   `json:"type" bson:"type"`
 	Data         []string      `json:"data" bson:"data"`
 	ExecutedTime time.Time     `json:"-" bson:"executed_time"`
@@ -22,18 +21,9 @@ type Command struct {
 	Error        string        `json:"-" bson:"error"`
 }
 
-func (c Command) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Name     string   `json:"name" bson:"name"`
-		Type     string   `json:"type" bson:"type"`
-		Data     []string `json:"data" bson:"data"`
-		IdleTime string   `json:"idletime"`
-	}{
-		Name:     c.Name,
-		Type:     c.Type.String(),
-		Data:     c.Data,
-		IdleTime: c.IdleTime.String(),
-	})
+type CustomCommand struct {
+	Command
+	Id string `bson:"_id,unique"`
 }
 
 // Setters

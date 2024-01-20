@@ -1,6 +1,7 @@
 package tomb
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -11,12 +12,35 @@ import (
 )
 
 type TombCommand struct {
-	command.Command
-	Rpc      string `bson:"rpc"`
-	Contract string `bson:"contract"`
-	Up       bool   `bson:"up"`
-	PkIdx    int64  `bson:"pkIdx"`
-	key      string `bson:"-"`
+	command.Command `json:"command" bson:"command"`
+	Id              string `json:"-" bson:"_id,unique"`
+	Rpc             string `json:"rpc" bson:"rpc"`
+	Contract        string `json:"contract" bson:"contract"`
+	Up              bool   `json:"up" bson:"up"`
+	PkIdx           int64  `json:"pkIdx" bson:"pkIdx"`
+	key             string `json:"-" bson:"-"`
+}
+
+func (c TombCommand) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Name     string   `json:"name"`
+		Type     string   `json:"type"`
+		Data     []string `json:"data"`
+		IdleTime string   `json:"idletime"`
+		Rpc      string   `json:"rpc"`
+		Contract string   `json:"contract"`
+		Up       bool     `json:"up"`
+		PkIdx    int64    `json:"pkIdx"`
+	}{
+		Name:     c.Name,
+		Type:     c.Type.String(),
+		Data:     c.Data,
+		IdleTime: c.IdleTime.String(),
+		Rpc:      c.Rpc,
+		Contract: c.Contract,
+		Up:       c.Up,
+		PkIdx:    c.PkIdx,
+	})
 }
 
 func (c *TombCommand) Validate(data []string) error { // rpc, contract, up, pkIdx, k

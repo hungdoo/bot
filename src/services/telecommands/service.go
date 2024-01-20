@@ -324,5 +324,5 @@ func NewService() *CommandService {
 		log.ErrorLogger.Fatal(err)
 	}
 
-	return &CommandService{Factory: NewCommadFactory(), Parser: parser}
+	return &CommandService{Factory: NewCommandFactory(), Parser: parser}
 }

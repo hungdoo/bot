@@ -1,6 +1,7 @@
 package balance
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -17,10 +18,32 @@ type Wallet struct {
 	Address    ethCommon.Address
 	PreBalance decimal.Decimal
 }
+
 type BalanceCommand struct {
-	command.Command
-	Rpc     string
-	Wallets []Wallet
+	command.Command `bson:"command"`
+	Id              string   `bson:"_id,unique"`
+	Rpc             string   `bson:"rpc"`
+	Wallets         []Wallet `bson:"wallets"`
+}
+
+func (c BalanceCommand) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Name     string   `json:"name"`
+		Type     string   `json:"type"`
+		Data     []string `json:"data"`
+		IdleTime string   `json:"idletime"`
+		Id       string   `json:"_id"`
+		Rpc      string   `json:"rpc"`
+		Wallets  []Wallet `json:"wallets"`
+	}{
+		Name:     c.Name,
+		Type:     c.Type.String(),
+		Data:     c.Data,
+		IdleTime: c.IdleTime.String(),
+		Id:       c.Id,
+		Rpc:      c.Rpc,
+		Wallets:  c.Wallets,
+	})
 }
 
 func (c *BalanceCommand) Validate(data []string) error {

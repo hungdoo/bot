@@ -8,45 +8,35 @@ import (
 
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/command/contract"
-	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/services/telecommands"
-	"github.com/shopspring/decimal"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-func TestFactory(t *testing.T) {
-	f := telecommands.NewCommadFactory()
+func TestFactoryAddJob(t *testing.T) {
+	f := telecommands.NewCommandFactory()
+	ret := f.Add(command.Balance, []string{"Balance", "url", "wallet1", "wallet2"})
+	t.Log(ret)
+	ret = f.Add(command.ContractCall, []string{"ContractCall", "url", "address", "funcSelect", "params", "0", "1", "18"})
+	t.Log(ret)
+	ret = f.Add(command.Tomb, []string{"Tomb", "rpc", "contract", "false", "0", "key"})
+	t.Log(ret)
+	// jobs, err := f.GetJobs()
+	// if err != nil {
+	// 	fmt.Print(err)
+	// }
+	// t.Log(jobs)
+}
+func TestFactoryGetJobs(t *testing.T) {
+	f := telecommands.NewCommandFactory()
 	jobs, err := f.GetJobs()
 	if err != nil {
 		fmt.Print(err)
 	}
-	fmt.Println("Before")
-	for _, j := range jobs {
-		_prev := j.GetPrev()
-		fmt.Println(_prev)
-		filter := bson.M{"name": j.GetName()}
-		update := bson.M{"$set": bson.M{"prev": decimal.NewFromInt(111111).String()}}
-		if err := db.GetDb().Update("commands", filter, update); err != nil {
-			fmt.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
-			continue
-		}
-	}
 
-	fmt.Println("After")
-	jobs, err = f.GetJobs()
+	res, err := json.MarshalIndent(jobs, "", "")
 	if err != nil {
 		fmt.Print(err)
 	}
-	for _, j := range jobs {
-		_prev := j.GetPrev()
-		fmt.Println(_prev)
-	}
-
-	// res, err := json.MarshalIndent(j, "", "")
-	// if err != nil {
-	// 	fmt.Print(err)
-	// }
-	// fmt.Print(string(res))
+	fmt.Print(string(res))
 }
 func TestCommandMap(t *testing.T) {
 	m := telecommands.CommandMap{

@@ -1,6 +1,6 @@
 package command
 
-type CommandType int
+type CommandType int32
 
 const (
 	Unknown CommandType = iota
