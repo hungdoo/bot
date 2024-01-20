@@ -64,7 +64,7 @@ func (c *TombplusClient) GameStarted() bool {
 }
 
 func (c *TombplusClient) GetRewards(user ethCommon.Address) decimal.Decimal {
-	reward, err := c.tomb.ProcessedRewardBalances(&bind.CallOpts{}, user)
+	reward, err := c.tomb.RewardBalance(&bind.CallOpts{}, user)
 	if err != nil {
 		return decimal.Zero
 	}
