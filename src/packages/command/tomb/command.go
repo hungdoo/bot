@@ -18,23 +18,23 @@ type TombCommand struct {
 	Contract        string `json:"contract" bson:"contract"`
 	Up              bool   `json:"up" bson:"up"`
 	PkIdx           int64  `json:"pkIdx" bson:"pkIdx"`
-	key             string `json:"-" bson:"-"`
+	Key             string `json:"key" bson:"key"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Name     string   `json:"name"`
-		Type     string   `json:"type"`
-		Data     []string `json:"data"`
-		IdleTime string   `json:"idletime"`
-		Rpc      string   `json:"rpc"`
-		Contract string   `json:"contract"`
-		Up       bool     `json:"up"`
-		PkIdx    int64    `json:"pkIdx"`
+		Name string `json:"name"`
+		Type string `json:"type"`
+		// Data     []string `json:"data"`
+		IdleTime string `json:"idletime"`
+		Rpc      string `json:"rpc"`
+		Contract string `json:"contract"`
+		Up       bool   `json:"up"`
+		PkIdx    int64  `json:"pkIdx"`
 	}{
-		Name:     c.Name,
-		Type:     c.Type.String(),
-		Data:     c.Data,
+		Name: c.Name,
+		Type: c.Type.String(),
+		// Data:     c.Data,
 		IdleTime: c.IdleTime.String(),
 		Rpc:      c.Rpc,
 		Contract: c.Contract,
@@ -54,7 +54,7 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 	if err = c.Validate(newValue); err != nil {
 		return err
 	}
-	c.Data = newValue // TODO: refractor to store into DB dynamically
+	// c.Data = newValue // TODO: refractor to store into DB dynamically
 	c.Rpc = newValue[0]
 	c.Contract = newValue[1]
 	c.Up, err = strconv.ParseBool(newValue[2])
@@ -65,7 +65,7 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 	if err != nil {
 		return err
 	}
-	c.key = newValue[4]
+	c.Key = newValue[4]
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 	if err != nil {
 		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}
-	pk, err := LoadSecrets(int(c.PkIdx), c.key)
+	pk, err := LoadSecrets(int(c.PkIdx), c.Key)
 	if err != nil {
 		return "", common.NewErrorWithSeverity(common.Error, err.Error())
 	}

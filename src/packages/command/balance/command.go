@@ -87,7 +87,7 @@ func (c *BalanceCommand) SetData(newValue []string) (err error) {
 	if err = c.Validate(newValue); err != nil {
 		return err
 	}
-	c.Data = newValue
+	// c.Data = newValue
 	c.Rpc = newValue[0]
 	for _, v := range newValue[1:] {
 		c.Wallets = append(

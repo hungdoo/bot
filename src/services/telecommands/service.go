@@ -42,14 +42,6 @@ func (s *CommandService) RegisterCommands() {
 					},
 				},
 				{
-					Name:      "debank",
-					UsageText: "name",
-					Action: func(c *cli.Context) error {
-						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.Debank, c.Args()))
-						return nil
-					},
-				},
-				{
 					Name:      "tomb",
 					UsageText: "name, rpc, contract, up, pkIdx, k",
 					Action: func(c *cli.Context) error {
@@ -127,12 +119,6 @@ func (s *CommandService) RegisterCommands() {
 							return err
 						}
 						fmt.Fprintln(s.Parser.Writer, res)
-						return nil
-					},
-				},
-				{
-					Name: "debank",
-					Action: func(c *cli.Context) error {
 						return nil
 					},
 				},

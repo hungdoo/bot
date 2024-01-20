@@ -11,7 +11,6 @@ import (
 	"github.com/hungdoo/bot/src/packages/command/balance"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/command/contract"
-	"github.com/hungdoo/bot/src/packages/command/debank"
 	"github.com/hungdoo/bot/src/packages/command/tomb"
 	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/log"
@@ -77,7 +76,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		if err := v.SetData(messages); err != nil {
 			return err.Error()
 		}
-		filter := bson.M{"name": v.GetName()}
+		filter := bson.M{"_id": v.GetName()}
 		update := bson.M{"$set": bson.M{"data": v.GetData()}}
 		if err := db.GetDb().Update("commands", filter, update); err != nil {
 			return err.Error()
@@ -88,7 +87,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 
 		switch cmdType {
 		case command.ContractCall:
-			newCommand = &contract.Command{
+			newCommand = &contract.ContractCommand{
 				Id: name,
 				Command: command.Command{
 					Name:     name,
@@ -105,16 +104,6 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 					Enabled:  true,
 					Type:     cmdType,
 					IdleTime: time.Minute * 5,
-				},
-			}
-		case command.Debank:
-			newCommand = &debank.Command{
-				Id: name,
-				Command: command.Command{
-					Name:     name,
-					Enabled:  true,
-					Type:     cmdType,
-					IdleTime: time.Second * 60,
 				},
 			}
 		case command.Balance:
@@ -146,7 +135,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 
 func (c *CommandFactory) Remove(name string) string {
 	if _, ok := c.commands[name]; ok {
-		deleteQuery := bson.M{"name": name}
+		deleteQuery := bson.M{"_id": name}
 		if err := db.GetDb().Delete("commands", deleteQuery); err != nil {
 			return err.Error()
 		}
@@ -238,7 +227,7 @@ func (c *CommandFactory) List() string {
 func (c *CommandFactory) On(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(true)
-		filter := bson.M{"name": v.GetName()}
+		filter := bson.M{"_id": v.GetName()}
 		update := bson.M{"$set": bson.M{"enabled": true}}
 		if err := db.GetDb().Update("commands", filter, update); err != nil {
 			return err.Error()
@@ -251,7 +240,7 @@ func (c *CommandFactory) On(name string) string {
 func (c *CommandFactory) Off(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(false)
-		filter := bson.M{"name": v.GetName()}
+		filter := bson.M{"_id": v.GetName()}
 		update := bson.M{"$set": bson.M{"enabled": false}}
 		if err := db.GetDb().Update("commands", filter, update); err != nil {
 			return err.Error()
@@ -264,7 +253,7 @@ func (c *CommandFactory) Off(name string) string {
 func (c *CommandFactory) SetInterval(name string, interval time.Duration) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetIdleTime(interval)
-		filter := bson.M{"name": v.GetName()}
+		filter := bson.M{"_id": v.GetName()}
 		update := bson.M{"$set": bson.M{"idletime": interval}}
 		if err := db.GetDb().Update("commands", filter, update); err != nil {
 			return err.Error()
@@ -307,13 +296,11 @@ func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 			var iCmd interface{}
 			switch cmd.Type {
 			case command.ContractCall:
-				iCmd = &contract.Command{}
+				iCmd = &contract.ContractCommand{}
 			case command.Tomb:
 				iCmd = &tomb.TombCommand{}
 			case command.Balance:
 				iCmd = &balance.BalanceCommand{}
-			case command.Debank:
-				iCmd = &debank.Command{}
 			default:
 				log.GeneralLogger.Printf("unsupported cmd[%+v] ", cmd)
 				continue
@@ -327,6 +314,7 @@ func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 			if !ok {
 				return nil, fmt.Errorf("cannot typecast cmd[%v] to ICommand", cmd)
 			}
+
 			name := _command.GetName()
 			c.commands[name] = _command
 			b, err := json.MarshalIndent(_command, "", "  ")
