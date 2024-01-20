@@ -61,12 +61,47 @@ func (c *TombplusClient) GameStarted() bool {
 	return val
 }
 
+func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.Int, error) {
+	flips, err := c.tomb.GetUserFlips(&bind.CallOpts{}, user)
+	if err != nil {
+		return nil, err
+	}
+	if len(flips) == 0 {
+		return big.NewInt(0), nil
+	}
+
+	return flips[len(flips)-1].EpochId, nil
+}
+
+func (c *TombplusClient) CanFlipForCurrentEpoch() bool {
+	ok, err := c.tomb.CanFlipForCurrentEpoch(&bind.CallOpts{})
+	if err != nil {
+		return false
+	}
+	return ok
+}
 func (c *TombplusClient) CurrentEpoch() int64 {
 	epochNum, err := c.tomb.CurrentEpochId(&bind.CallOpts{})
 	if err != nil {
 		return -1
 	}
 	return epochNum.Int64()
+}
+
+func (c *TombplusClient) GetPauseGameAtEpoch() int64 {
+	val, err := c.tomb.PauseGameAtEpoch(&bind.CallOpts{})
+	if err != nil {
+		return 0
+	}
+	return val.Int64()
+}
+
+func (c *TombplusClient) GetUpgradedMasonry() string {
+	val, err := c.tomb.UpgradedMasonry(&bind.CallOpts{})
+	if err != nil {
+		return ""
+	}
+	return val.String()
 }
 
 func (c *TombplusClient) IsVotedAtEpoch(user ethCommon.Address, epoch int64) (bool, error) {

@@ -8,7 +8,6 @@ import (
 	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/tombplus"
-	"github.com/shopspring/decimal"
 )
 
 type TombCommand struct {
@@ -64,13 +63,13 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 	switch subcommand {
 	case "stats":
 		currentEpoch := cli.CurrentEpoch()
-		lastVotedEpoch := c.Prev
-		isVoted, err := cli.IsVotedAtEpoch(user, currentEpoch)
+		lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
-		max := cli.MaxAllowedFutureFlips()
-		return fmt.Sprintf("cur-isVoted-lastVoted-maxFuture: %v-%v-%v-%v", currentEpoch, isVoted, lastVotedEpoch, max), nil
+		pauseEpoch := cli.GetPauseGameAtEpoch()
+		mason := cli.GetUpgradedMasonry()
+		return fmt.Sprintf("cur-last-pause-mason: %v-%v-%v-%v", currentEpoch, lastVotedEpoch, pauseEpoch, mason), nil
 
 	case "claim":
 		res, err := cli.Claim(pk)
@@ -86,25 +85,28 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 			return "", common.NewErrorWithSeverity(common.Error, "game not started")
 		}
 		currentEpoch := cli.CurrentEpoch()
-		voted, err := cli.IsVotedAtEpoch(user, currentEpoch)
+		lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
-		}
-		if voted {
-			return "", common.NewErrorWithSeverity(common.Error, "already Voted")
 		}
 		maxFutureFlips := cli.MaxAllowedFutureFlips()
 		if maxFutureFlips <= 0 {
 			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
 		}
-		res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips, c.Up)
-		if errWithSeverity != nil {
-			return "", errWithSeverity
+		if currentEpoch == lastVotedEpoch.Int64() {
+			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips-1, c.Up)
+			if errWithSeverity != nil {
+				return "", errWithSeverity
+			}
+			return res, nil
+		} else if currentEpoch > lastVotedEpoch.Int64() {
+			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips, c.Up)
+			if errWithSeverity != nil {
+				return "", errWithSeverity
+			}
+			return res, nil
 		}
-		// last voted epoch (could be in the future)
-		// for reporting only
-		c.SetPrev(decimal.NewFromInt(currentEpoch + maxFutureFlips))
-		return res, nil
+		return "", common.NewErrorWithSeverity(common.Info, "already Voted")
 	}
 	return "", common.NewErrorWithSeverity(common.Info, "no action")
 }

@@ -240,7 +240,12 @@ func (c *CommandService) Work() {
 				j.SetExecutedTime(time.Now())
 				if execErr != nil && execErr.Level >= common.Error {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), execErr.Error())
-					j.SetError(execErr.Error())
+					if execErr.Level >= common.Critical { // should report asap
+						off := c.Factory.Off(j.GetName())
+						results = append(results, fmt.Sprintf("%v failed with CRIT[%s]: off[%s]", j.GetName(), execErr.Error(), off))
+					} else {
+						j.SetError(execErr.Error()) // log for ls cmd
+					}
 					continue
 				}
 
