@@ -91,9 +91,13 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
-		pauseEpoch := cli.GetPauseGameAtEpoch()
+		rewards := cli.GetRewards(user)
 		mason := cli.GetUpgradedMasonry()
-		return fmt.Sprintf("cur-last-pause-mason: %v-%v-%v-%v", currentEpoch, lastVotedEpoch, pauseEpoch, mason), nil
+		pauseEpoch := cli.GetPauseGameAtEpoch()
+		if pauseEpoch != 0 {
+			return "", common.NewErrorWithSeverity(common.Error, "game not started")
+		}
+		return fmt.Sprintf("cur-last-rewards-pause-mason: %v-%v-%v-%v-%v", currentEpoch, lastVotedEpoch, rewards, pauseEpoch, mason.String()), nil
 
 	case "claim":
 		res, err := cli.Claim(pk)
@@ -117,6 +121,7 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		if maxFutureFlips <= 0 {
 			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
 		}
+
 		if currentEpoch == lastVotedEpoch.Int64() {
 			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips-1, c.Up)
 			if errWithSeverity != nil {

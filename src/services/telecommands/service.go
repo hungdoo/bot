@@ -1,7 +1,6 @@
 package telecommands
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -17,8 +16,6 @@ import (
 	"github.com/hungdoo/bot/src/packages/utils"
 	"github.com/urfave/cli"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // @dev external facing controller
@@ -259,9 +256,9 @@ func (c *CommandService) Work() {
 					j.SetDisplayMsg(result)
 					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
 				}
-				// exec seccessfully -> update prev in db
-				filter := bson.M{"name": j.GetName()}
-				update := bson.M{"$set": bson.M{"prev": j.GetPrev().String(), "display_msg": j.GetDisplayMsg()}}
+				// exec seccessfully -> update db
+				filter := bson.M{"_id": j.GetName()}
+				update := bson.M{"$set": j}
 				if err := db.GetDb().Update("commands", filter, update); err != nil {
 					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
 				}
@@ -312,17 +309,17 @@ func (c *CommandService) ListenToCommand() error {
 
 func NewService() *CommandService {
 	parser := cmdparser.GetParser()
-	keys := bson.M{
-		"name": 1, // index in ascending order; -1 for descending order
-	}
-	index := mongo.IndexModel{
-		Keys:    keys,
-		Options: options.Index().SetUnique(true),
-	}
-	_, err := db.GetDb().GetCollection("commands").Indexes().CreateOne(context.Background(), index)
-	if err != nil {
-		log.ErrorLogger.Fatal(err)
-	}
+	// keys := bson.M{
+	// 	"_id": 1, // index in ascending order; -1 for descending order
+	// }
+	// index := mongo.IndexModel{
+	// 	Keys:    keys,
+	// 	Options: options.Index().SetUnique(true),
+	// }
+	// _, err := db.GetDb().GetCollection("commands").Indexes().CreateOne(context.Background(), index)
+	// if err != nil {
+	// 	log.ErrorLogger.Fatal(err)
+	// }
 
 	return &CommandService{Factory: NewCommandFactory(), Parser: parser}
 }

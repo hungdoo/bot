@@ -11,19 +11,49 @@ import (
 	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/log"
+	"github.com/hungdoo/bot/src/packages/utils"
 	"github.com/shopspring/decimal"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Wallet struct {
-	Address    ethCommon.Address
-	PreBalance decimal.Decimal
+	Address    ethCommon.Address `bson:"address"`
+	PreBalance decimal.Decimal   `bson:"prebalance"`
+}
+
+func (w *Wallet) MarshalBSON() ([]byte, error) {
+	return bson.Marshal(&struct {
+		Address    string
+		PreBalance string
+	}{
+		Address:    w.Address.String(),
+		PreBalance: w.PreBalance.String(),
+	})
+}
+func (w *Wallet) UnmarshalBSON(data []byte) error {
+	var d bson.D
+	err := bson.Unmarshal(data, &d)
+	if err != nil {
+		return err
+	}
+	for _, v := range d {
+		if v.Key == "address" {
+			w.Address = ethCommon.HexToAddress(v.Value.(string))
+		} else if v.Key == "prebalance" {
+			w.PreBalance, err = decimal.NewFromString(v.Value.(string))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type BalanceCommand struct {
-	command.Command `bson:"command"`
-	Id              string   `bson:"_id,unique"`
-	Rpc             string   `bson:"rpc"`
-	Wallets         []Wallet `bson:"wallets"`
+	command.Command
+	Id      string   `bson:"_id,unique"`
+	Rpc     string   `bson:"rpc"`
+	Wallets []Wallet `bson:"wallets"`
 }
 
 func (c BalanceCommand) MarshalJSON() ([]byte, error) {
@@ -120,12 +150,12 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		}
 
 		balance := decimal.NewFromBigInt(decimalValue, 0)
-		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64())
+		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, utils.DivDecimals(balance, 18).InexactFloat64())
 		if mustReport || !mustReport && !balance.Equal(wallet.PreBalance) {
 			c.Wallets[i].PreBalance = balance
 			results = append(results, fmt.Sprintf("\n%s[P:%.5f|V:%.5f]", wallet.Address,
-				wallet.PreBalance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64(),
-				balance.Div(decimal.NewFromBigInt(ethCommon.Big1, 18)).InexactFloat64()))
+				utils.DivDecimals(wallet.PreBalance, 18).InexactFloat64(),
+				utils.DivDecimals(balance, 18).InexactFloat64()))
 		}
 	}
 

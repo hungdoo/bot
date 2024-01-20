@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/hungdoo/bot/src/common"
+	"github.com/hungdoo/bot/src/packages/utils"
+	"github.com/shopspring/decimal"
 
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -61,6 +63,14 @@ func (c *TombplusClient) GameStarted() bool {
 	return val
 }
 
+func (c *TombplusClient) GetRewards(user ethCommon.Address) decimal.Decimal {
+	reward, err := c.tomb.ProcessedRewardBalances(&bind.CallOpts{}, user)
+	if err != nil {
+		return decimal.Zero
+	}
+	return utils.DivDecimals(decimal.NewFromBigInt(reward, 0), 18)
+}
+
 func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.Int, error) {
 	flips, err := c.tomb.GetUserFlips(&bind.CallOpts{}, user)
 	if err != nil {
@@ -96,12 +106,12 @@ func (c *TombplusClient) GetPauseGameAtEpoch() int64 {
 	return val.Int64()
 }
 
-func (c *TombplusClient) GetUpgradedMasonry() string {
+func (c *TombplusClient) GetUpgradedMasonry() ethCommon.Address {
 	val, err := c.tomb.UpgradedMasonry(&bind.CallOpts{})
 	if err != nil {
-		return ""
+		return ethCommon.Address{}
 	}
-	return val.String()
+	return val
 }
 
 func (c *TombplusClient) IsVotedAtEpoch(user ethCommon.Address, epoch int64) (bool, error) {

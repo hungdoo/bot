@@ -77,10 +77,11 @@ func (c *Command) GetType() CommandType {
 	return c.Type
 }
 
-// @dev don't change. need consistency for db access
 func (c *Command) GetDisplayMsg() string {
 	return c.DisplayMsg
 }
+
+// @dev don't change. need consistency for db access
 func (c *Command) GetName() string {
 	return c.Name
 }

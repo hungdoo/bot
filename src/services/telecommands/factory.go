@@ -329,7 +329,11 @@ func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 			}
 			name := _command.GetName()
 			c.commands[name] = _command
-			log.GeneralLogger.Printf("Loaded Command [%v]\n", name)
+			b, err := json.MarshalIndent(_command, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("cannot MarshalIndent _command[%v]", _command)
+			}
+			log.GeneralLogger.Printf("Loaded Command [%v]\n", string(b))
 		}
 	}
 
