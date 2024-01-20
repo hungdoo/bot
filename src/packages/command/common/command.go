@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,15 +11,29 @@ import (
 
 type Command struct {
 	ICommand     `json:"-" bson:"-"`
-	Name         string        `bson:"name"`
-	Type         CommandType   `json:"-" bson:"type"`
-	Data         []string      `bson:"data"`
-	ExecutedTime time.Time     `bson:"executed_time"`
-	IdleTime     time.Duration `bson:"idletime"`
-	Enabled      bool          `bson:"enabled"`
-	Prev         string        `bson:"prev"`
-	DisplayMsg   string        `bson:"display_msg"`
-	Error        string        `bson:"error"`
+	Name         string        `json:"name" bson:"name"`
+	Type         CommandType   `json:"type" bson:"type"`
+	Data         []string      `json:"data" bson:"data"`
+	ExecutedTime time.Time     `json:"-" bson:"executed_time"`
+	IdleTime     time.Duration `json:"idletime" bson:"idletime"`
+	Enabled      bool          `json:"-" bson:"enabled"`
+	Prev         string        `json:"-" bson:"prev"`
+	DisplayMsg   string        `json:"-" bson:"display_msg"`
+	Error        string        `json:"-" bson:"error"`
+}
+
+func (c Command) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Name     string   `json:"name" bson:"name"`
+		Type     string   `json:"type" bson:"type"`
+		Data     []string `json:"data" bson:"data"`
+		IdleTime string   `json:"idletime"`
+	}{
+		Name:     c.Name,
+		Type:     c.Type.String(),
+		Data:     c.Data,
+		IdleTime: c.IdleTime.String(),
+	})
 }
 
 // Setters

@@ -14,6 +14,7 @@ import (
 	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/telegram"
+	"github.com/hungdoo/bot/src/packages/utils"
 	"github.com/urfave/cli"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -200,11 +201,15 @@ func (s *CommandService) RegisterCommands() {
 			Usage:   "set new run interval for task in s",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "task,t", Required: true},
-				cli.Int64Flag{Name: "duration, d", Required: true},
+				cli.StringFlag{Name: "duration, d", Required: true, Usage: "30s, 1m, 2h"},
 			},
 			Action: func(c *cli.Context) error {
 				task := c.String("task")
-				duration := time.Duration(c.Int64("duration")) * time.Second
+				duration, err := utils.ParseCustomDuration(c.String("duration"))
+				if err != nil {
+					fmt.Fprintln(s.Parser.Writer, err.Error())
+					return err
+				}
 				fmt.Fprintln(s.Parser.Writer, s.Factory.SetInterval(task, duration))
 				return nil
 			},

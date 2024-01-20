@@ -102,7 +102,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 					Name:     name,
 					Enabled:  true,
 					Type:     cmdType,
-					IdleTime: time.Minute * 30,
+					IdleTime: time.Minute * 5,
 				},
 			}
 		case command.Debank:
