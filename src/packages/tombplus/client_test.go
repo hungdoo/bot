@@ -28,8 +28,9 @@ func TestMain(m *testing.M) {
 func setup() {
 	// Set up your fixture data
 	privateKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" // get from anvil pub 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-	rpcEndpoint := "http://localhost:8545"
-	contractAddress := common.HexToAddress("0xc96304e3c037f81dA488ed9dEa1D8F2a48278a75") // MasonryPlus: broadcast/TombPlusDeployment.s.sol/250/run-latest.json
+	// rpcEndpoint := "http://localhost:8545" // anvil
+	rpcEndpoint := "https://rpc.ftm.tools"
+	contractAddress := common.HexToAddress("0x45b7304fe1542b440b4c61ea04958cefbcec1089") // MasonryPlus: broadcast/TombPlusDeployment.s.sol/250/run-latest.json
 
 	var err error
 	pk, err = PrivateKeyFromHex(privateKeyHex)
@@ -67,16 +68,15 @@ func TestClaim(t *testing.T) {
 
 func TestViewCalls(t *testing.T) {
 	currentEpoch := tombplusCli.CurrentEpoch()
-	t.Log(currentEpoch)
-	t.Log(tombplusCli.GameStarted())
+	t.Logf("GameStarted: %v", tombplusCli.GameStarted())
+	t.Logf("currentEpoch: %v", currentEpoch)
 
-	t.Log(tombplusCli.MaxAllowedFutureFlips())
+	t.Logf("MaxAllowedFutureFlips: %v", tombplusCli.MaxAllowedFutureFlips())
 
-	fromAddress, err := AddressFromPriKey(pk)
+	latestEpoch, err := tombplusCli.GetUserLastedVoteEpochId(common.HexToAddress("")) // kimchi,kimbap
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	t.Log(tombplusCli.IsVotedAtEpoch(fromAddress, 7))
-	t.Log(tombplusCli.IsVotedAtEpoch(fromAddress, 8))
-	t.Log(tombplusCli.IsVotedAtEpoch(fromAddress, 9))
+	t.Logf("GetUserLastedVoteEpochId: %v", latestEpoch)
+
 }

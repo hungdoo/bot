@@ -76,11 +76,14 @@ func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.
 	if err != nil {
 		return nil, err
 	}
-	if len(flips) == 0 {
-		return big.NewInt(0), nil
+	latestEpoch := big.NewInt(0)
+	for _, v := range flips {
+		if v.EpochId.Cmp(latestEpoch) >= 1 {
+			latestEpoch = v.EpochId
+		}
 	}
 
-	return flips[len(flips)-1].EpochId, nil
+	return latestEpoch, nil
 }
 
 func (c *TombplusClient) CanFlipForCurrentEpoch() bool {
