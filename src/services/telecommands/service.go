@@ -240,7 +240,7 @@ func (c *CommandService) Work() {
 				// record result & info error for logging with tele.List cmd, no realtime report
 				if result != "" {
 					j.SetDisplayMsg(result)
-					results = append(results, fmt.Sprintf("job [%s] result: %s", j.GetName(), result))
+					results = append(results, fmt.Sprintf("[%s] %s", j.GetName(), result))
 				}
 				// exec seccessfully -> update db
 				filter := bson.M{"_id": j.GetName()}

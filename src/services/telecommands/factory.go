@@ -181,11 +181,11 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			}
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("job [%s] result: %s", cmd.GetName(), result))
+				executed = append(executed, fmt.Sprintf("[%s] %s", cmd.GetName(), result))
 			}
 		}
-
 		return string(strings.Join(executed, "\n")), nil
+
 	default:
 		searchedList := filtered.Search(task)
 
@@ -203,10 +203,9 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			}
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("job [%s] result: %s", cmd.GetName(), result))
+				executed = append(executed, fmt.Sprintf("[%s] %s", cmd.GetName(), result))
 			}
 		}
-
 		return string(strings.Join(executed, "\n")), nil
 	}
 }
