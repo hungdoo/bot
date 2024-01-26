@@ -183,6 +183,8 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				cmd.SetDisplayMsg(result)
 				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
+			// exec seccessfully -> update db
+			StoreDb(cmd)
 		}
 		return string(strings.Join(executed, "\n")), nil
 
@@ -205,6 +207,8 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				cmd.SetDisplayMsg(result)
 				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
+			// exec seccessfully -> update db
+			StoreDb(cmd)
 		}
 		return string(strings.Join(executed, "\n")), nil
 	}

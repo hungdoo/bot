@@ -9,13 +9,11 @@ import (
 	"github.com/hungdoo/bot/src/common"
 	"github.com/hungdoo/bot/src/packages/cmdparser"
 	command "github.com/hungdoo/bot/src/packages/command/common"
-	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/telegram"
 	"github.com/hungdoo/bot/src/packages/utils"
 	"github.com/urfave/cli"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // @dev external facing controller
@@ -127,7 +125,7 @@ func (s *CommandService) RegisterCommands() {
 					UsageText: "name, rpc, contract, up, pkIdx, k",
 					Flags: []cli.Flag{
 						cli.StringFlag{Name: "task,t", Required: true},
-						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, claim, cronjob, default", Value: "default"},
+						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, clear, claim, cronjob, default", Value: "default"},
 					},
 					Action: func(c *cli.Context) error {
 						task := c.String("task")
@@ -243,11 +241,7 @@ func (c *CommandService) Work() {
 					results = append(results, fmt.Sprintf("[%s]\n%s", j.GetName(), result))
 				}
 				// exec seccessfully -> update db
-				filter := bson.M{"_id": j.GetName()}
-				update := bson.M{"$set": j}
-				if err := db.GetDb().Update("commands", filter, update); err != nil {
-					log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", j.GetName(), err)
-				}
+				StoreDb(j)
 			}
 		}
 		if len(results) != 0 {

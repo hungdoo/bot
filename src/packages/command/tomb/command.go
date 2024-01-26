@@ -102,6 +102,10 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		}
 		return fmt.Sprintf("cur-last-rewards-pause-mason: %v-%v-%v-%v-%v", currentEpoch, lastVotedEpoch, rewards, pauseEpoch, mason.String()), nil
 
+	case "clear":
+		c.SentTx = ""
+		return "", nil
+
 	case "claim":
 		res, err := cli.Claim(pk)
 		if err != nil {
