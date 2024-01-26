@@ -46,9 +46,10 @@ func NewAuthorizedTransactor(ec *ethclient.Client, privateKeyECDSA *ecdsa.Privat
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gasPrice: %w", err)
 	}
-	multitude := new(big.Int).Div(gasPrice, big.NewInt(100*params.GWei))
-	if multitude.Int64() > 1 { // ftm gas > 100 Gwei
-		gasPrice = big.NewInt(80 * params.GWei)
+	// gasPrice = min(gasPrice, maxGas)
+	maxGas := big.NewInt(100 * params.GWei)
+	if gasPrice.Cmp(maxGas) >= 1 { // ftm gas > maxGas
+		gasPrice = maxGas
 	}
 	signerFn := func(address common.Address, transaction *types.Transaction) (*types.Transaction, error) {
 		return types.SignTx(transaction, types.LatestSignerForChainID(chainID), privateKeyECDSA)
