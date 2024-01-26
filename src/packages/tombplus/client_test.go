@@ -2,6 +2,7 @@ package tombplus
 
 import (
 	"crypto/ecdsa"
+	"math/big"
 	"os"
 	"testing"
 
@@ -48,22 +49,30 @@ func teardown() {
 	// Clean up your fixture data
 }
 
-func TestFlipmultiple(t *testing.T) {
-	result, err := tombplusCli.Flipmultiple(pk, 8, true)
+func TestNewAuthorizedTransactor(t *testing.T) {
+	opts, err := NewAuthorizedTransactor(tombplusCli.ec, pk, 0, big.NewInt(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf(result) // forge debug <txhash>
+	t.Log(opts.GasPrice)
+}
+func TestFlipmultiple(t *testing.T) {
+	tx, err := tombplusCli.Flipmultiple(pk, 8, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(tx) // forge debug <txhash>
 }
 
 func TestClaim(t *testing.T) {
-	result, err := tombplusCli.Claim(pk)
+	tx, err := tombplusCli.Claim(pk)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf(result) // forge debug <txhash>
+	t.Log(tx) // forge debug <txhash>
 }
 
 func TestViewCalls(t *testing.T) {

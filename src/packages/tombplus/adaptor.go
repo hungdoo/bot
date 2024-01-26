@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 var _contract *Tombplus
@@ -26,23 +27,28 @@ func GetTombplusContract(ec *ethclient.Client, contractAdr common.Address) (*Tom
 }
 
 func NewAuthorizedTransactor(ec *ethclient.Client, privateKeyECDSA *ecdsa.PrivateKey, gaslimit uint64, value *big.Int) (*bind.TransactOpts, error) {
+	ctx := context.Background()
 	fromAddress, err := AddressFromPriKey(privateKeyECDSA)
 	if err != nil {
 		return nil, err
 	}
 
-	nonce, err := ec.PendingNonceAt(context.Background(), fromAddress)
+	nonce, err := ec.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nonce: %w", err)
 	}
 
-	chainID, err := ec.ChainID(context.Background())
+	chainID, err := ec.ChainID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chainId: %w", err)
 	}
-	gasPrice, err := ec.SuggestGasPrice(context.Background())
+	gasPrice, err := ec.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gasPrice: %w", err)
+	}
+	multitude := new(big.Int).Div(gasPrice, big.NewInt(100*params.GWei))
+	if multitude.Int64() > 1 { // ftm gas > 100 Gwei
+		gasPrice = big.NewInt(80 * params.GWei)
 	}
 	signerFn := func(address common.Address, transaction *types.Transaction) (*types.Transaction, error) {
 		return types.SignTx(transaction, types.LatestSignerForChainID(chainID), privateKeyECDSA)

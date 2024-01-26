@@ -153,7 +153,7 @@ func (c *BalanceCommand) Execute(mustReport bool, subcommand string) (string, *c
 		log.GeneralLogger.Printf("%s: %.5f", wallet.Address, utils.DivDecimals(balance, 18).InexactFloat64())
 		if mustReport || !mustReport && !balance.Equal(wallet.PreBalance) {
 			c.Wallets[i].PreBalance = balance
-			results = append(results, fmt.Sprintf("\n%s[P:%.5f|V:%.5f]", wallet.Address,
+			results = append(results, fmt.Sprintf("%s\n=> [P:%.5f | V:%.5f]\n", wallet.Address,
 				utils.DivDecimals(wallet.PreBalance, 18).InexactFloat64(),
 				utils.DivDecimals(balance, 18).InexactFloat64()))
 		}

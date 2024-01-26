@@ -224,7 +224,7 @@ func (c *CommandService) Work() {
 			if !j.IsIdle() {
 				j.SetError("")
 				result, execErr := j.Execute(false, "")
-				log.GeneralLogger.Printf("[%s] execution result: [%s]", j.GetName(), result)
+				log.GeneralLogger.Printf("[%s] execution: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
 				if execErr != nil && execErr.Level >= common.Error {
 					log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", j.GetName(), execErr.Error())
@@ -240,7 +240,7 @@ func (c *CommandService) Work() {
 				// record result & info error for logging with tele.List cmd, no realtime report
 				if result != "" {
 					j.SetDisplayMsg(result)
-					results = append(results, fmt.Sprintf("[%s] %s", j.GetName(), result))
+					results = append(results, fmt.Sprintf("[%s]\n%s", j.GetName(), result))
 				}
 				// exec seccessfully -> update db
 				filter := bson.M{"_id": j.GetName()}

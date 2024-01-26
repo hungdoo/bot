@@ -19,6 +19,7 @@ type TombCommand struct {
 	Up              bool   `json:"up" bson:"up"`
 	PkIdx           int64  `json:"pkIdx" bson:"pkIdx"`
 	Key             string `json:"key" bson:"key"`
+	SentTx          string `json:"sent_tx" bson:"sent_tx"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
@@ -31,6 +32,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Contract string `json:"contract"`
 		Up       bool   `json:"up"`
 		PkIdx    int64  `json:"pkIdx"`
+		SentTx   string `json:"sent_tx" bson:"sent_tx"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
@@ -40,6 +42,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Contract: c.Contract,
 		Up:       c.Up,
 		PkIdx:    c.PkIdx,
+		SentTx:   c.SentTx,
 	})
 }
 
@@ -104,10 +107,23 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Critical, err.Error())
 		}
-		return res, nil
+		// c.SentTx = res.Hash().String() // no need to record claim tx
+		return res.Hash().String(), nil
 
 	case "cronjob":
 	default:
+		if len(c.SentTx) != 0 {
+			toCheck := c.SentTx
+			// Has pending tx
+			if err := cli.CheckResult(toCheck); err != nil {
+				return "", err
+			}
+			// tx successful, clear sent tx hash
+			c.SentTx = ""
+			return fmt.Sprintf("tx[%s] successful", toCheck), nil
+		}
+
+		// Start fresh, no pending tx
 		gameStarted := cli.GameStarted()
 		if !gameStarted {
 			return "", common.NewErrorWithSeverity(common.Error, "game not started")
@@ -121,19 +137,20 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		if maxFutureFlips <= 0 {
 			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
 		}
-
-		if currentEpoch == lastVotedEpoch.Int64() {
+		if currentEpoch > 0 && currentEpoch == lastVotedEpoch.Int64() {
 			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips-1, c.Up)
 			if errWithSeverity != nil {
 				return "", errWithSeverity
 			}
-			return res, nil
+			c.SentTx = res.Hash().String()
+			return fmt.Sprintf("tx[%s] sent", c.SentTx), nil
 		} else if currentEpoch > lastVotedEpoch.Int64() {
 			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips, c.Up)
 			if errWithSeverity != nil {
 				return "", errWithSeverity
 			}
-			return res, nil
+			c.SentTx = res.Hash().String()
+			return fmt.Sprintf("tx[%s] sent", c.SentTx), nil
 		}
 		return "", common.NewErrorWithSeverity(common.Info, "already Voted")
 	}

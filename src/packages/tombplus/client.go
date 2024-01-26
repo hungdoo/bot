@@ -76,7 +76,7 @@ func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.
 	if err != nil {
 		return nil, err
 	}
-	latestEpoch := big.NewInt(0)
+	latestEpoch := big.NewInt(-1)
 	for _, v := range flips {
 		if v.EpochId.Cmp(latestEpoch) >= 1 {
 			latestEpoch = v.EpochId
@@ -125,24 +125,24 @@ func (c *TombplusClient) IsVotedAtEpoch(user ethCommon.Address, epoch int64) (bo
 	return val.Found, nil
 }
 
-func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (string, *common.ErrorWithSeverity) {
+func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (*types.Transaction, *common.ErrorWithSeverity) {
 	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
 	if err != nil {
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	signedTx, err := c.tomb.Claim(noSendOpts)
 	if err != nil {
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
-func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64, up bool) (string, *common.ErrorWithSeverity) {
+func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
 	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
 	if err != nil {
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	ups := make([]bool, epochs)
@@ -152,17 +152,18 @@ func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64
 
 	signedTx, err := c.tomb.FlipMultiple(noSendOpts, ups)
 	if err != nil {
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
-func (c *TombplusClient) checkResult(tx *types.Transaction) (string, *common.ErrorWithSeverity) {
+func (c *TombplusClient) CheckResult(txHash string) *common.ErrorWithSeverity {
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), c.ec, tx)
+	// receipt, err := bind.WaitMined(context.Background(), c.ec, tx)
+	receipt, err := c.ec.TransactionReceipt(context.Background(), ethCommon.HexToHash(txHash))
 	if err != nil {
 		// rpc error
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	if receipt.Status == 0 {
@@ -172,13 +173,13 @@ func (c *TombplusClient) checkResult(tx *types.Transaction) (string, *common.Err
 		}
 
 		// onchain tx reverted, raise to Critical
-		return "", common.NewErrorWithSeverity(common.Critical, fmt.Sprintf("transaction %s was reverted with reason: %s", receipt.TxHash.Hex(), strings.Join(reasons, "\n")))
+		return common.NewErrorWithSeverity(common.Critical, fmt.Sprintf("transaction %s was reverted with reason: %s", receipt.TxHash.Hex(), strings.Join(reasons, "\n")))
 	}
 
-	return receipt.TxHash.Hex(), nil
+	return nil
 }
 
-func (c *TombplusClient) dryrunAndSend(fromAddress ethCommon.Address, signedTx *types.Transaction) (string, *common.ErrorWithSeverity) {
+func (c *TombplusClient) dryrunAndSend(fromAddress ethCommon.Address, signedTx *types.Transaction) (*types.Transaction, *common.ErrorWithSeverity) {
 	// Dryrun first to save gas in case of revert
 	_, err := c.ec.CallContract(context.Background(), ethereum.CallMsg{
 		To:       signedTx.To(),
@@ -190,13 +191,13 @@ func (c *TombplusClient) dryrunAndSend(fromAddress ethCommon.Address, signedTx *
 	}, nil)
 	if err != nil {
 		// tx will revert, no need to send
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
 	err = c.ec.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		// rpc error
-		return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
-	return c.checkResult(signedTx)
+	return signedTx, nil
 }

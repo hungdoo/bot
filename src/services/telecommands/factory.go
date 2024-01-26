@@ -181,7 +181,7 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			}
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("[%s] %s", cmd.GetName(), result))
+				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
 		}
 		return string(strings.Join(executed, "\n")), nil
@@ -203,7 +203,7 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 			}
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("[%s] %s", cmd.GetName(), result))
+				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
 		}
 		return string(strings.Join(executed, "\n")), nil
