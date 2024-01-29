@@ -32,6 +32,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Contract string `json:"contract"`
 		Up       bool   `json:"up"`
 		PkIdx    int64  `json:"pkIdx"`
+		Key      string `json:"key" bson:"key"`
 		SentTx   string `json:"sent_tx" bson:"sent_tx"`
 	}{
 		Name: c.Name,
@@ -42,6 +43,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Contract: c.Contract,
 		Up:       c.Up,
 		PkIdx:    c.PkIdx,
+		Key:      c.Key,
 		SentTx:   c.SentTx,
 	})
 }

@@ -33,18 +33,26 @@ func (c ContractCommand) MarshalJSON() ([]byte, error) {
 		Name string `json:"name"`
 		Type string `json:"type"`
 		// Data     []string `json:"data"`
-		IdleTime string `json:"idletime"`
-		Rpc      string `json:"rpc"`
-		Contract string `json:"contract"`
-		Up       bool   `json:"up"`
-		PkIdx    int64  `json:"pkIdx"`
+		IdleTime   string   `json:"idletime"`
+		Rpc        string   `json:"rpc"`
+		Contract   string   `json:"contract"`
+		Method     string   `json:"method" bson:"method"`
+		Params     []string `json:"params" bson:"params"`
+		ValueIndex int64    `json:"index" bson:"index"`
+		Margin     int64    `json:"margin" bson:"margin"`
+		Precision  int64    `json:"precision" bson:"precision"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
 		// Data:     c.Data,
-		IdleTime: c.IdleTime.String(),
-		Rpc:      c.Rpc,
-		Contract: c.Contract,
+		IdleTime:   c.IdleTime.String(),
+		Rpc:        c.Rpc,
+		Contract:   c.Contract,
+		Method:     c.Method,
+		Params:     c.Params,
+		ValueIndex: c.ValueIndex,
+		Margin:     c.Margin,
+		Precision:  c.Precision,
 	})
 }
 
