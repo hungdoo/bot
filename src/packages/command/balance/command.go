@@ -58,19 +58,16 @@ type BalanceCommand struct {
 
 func (c BalanceCommand) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Name     string   `json:"name"`
-		Type     string   `json:"type"`
-		Data     []string `json:"data"`
+		Name string `json:"name"`
+		Type string `json:"type"`
+		// Data     []string `json:"data"`
 		IdleTime string   `json:"idletime"`
-		Id       string   `json:"_id"`
 		Rpc      string   `json:"rpc"`
 		Wallets  []Wallet `json:"wallets"`
 	}{
 		Name:     c.Name,
 		Type:     c.Type.String(),
-		Data:     c.Data,
 		IdleTime: c.IdleTime.String(),
-		Id:       c.Id,
 		Rpc:      c.Rpc,
 		Wallets:  c.Wallets,
 	})
