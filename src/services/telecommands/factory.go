@@ -76,9 +76,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		if err := v.SetData(messages); err != nil {
 			return err.Error()
 		}
-		filter := bson.M{"_id": v.GetName()}
-		update := bson.M{"$set": bson.M{"data": v.GetData()}}
-		if err := db.GetDb().Update("commands", filter, update); err != nil {
+		if err := StoreDb(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] updated", name)
@@ -125,7 +123,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			return err.Error()
 		}
 
-		if err := db.GetDb().Insert("commands", newCommand); err != nil {
+		if err := StoreDb(v); err != nil {
 			return err.Error()
 		}
 		c.commands[name] = newCommand
@@ -159,6 +157,9 @@ func (c *CommandFactory) Show(name string) string {
 
 func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...string) (res string, err error) {
 	filtered := c.commands.Filter(cmdType)
+	var executedCmds []command.ICommand
+	var executedResults []string
+
 	switch cmdType {
 	case command.Tomb:
 		subCmd := ""
@@ -167,51 +168,57 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 		}
 		searchedList := filtered.Search(task)
 
-		var executed []string
 		for _, cmd := range searchedList {
 			result, execErr := cmd.Execute(true, subCmd)
 			if execErr != nil && execErr.Level >= common.Error {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), execErr.Error())
 				if execErr.Level >= common.Critical {
-					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), execErr.Error()))
+					executedResults = append(executedResults, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), execErr.Error()))
 				} else {
-					executed = append(executed, execErr.Error())
+					executedResults = append(executedResults, execErr.Error())
 				}
 				continue
 			}
+
+			// exec seccessfully -> update db
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
+				executedResults = append(executedResults, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
-			// exec seccessfully -> update db
-			StoreDb(cmd)
+			executedCmds = append(executedCmds, cmd)
 		}
-		return string(strings.Join(executed, "\n")), nil
 
 	default:
 		searchedList := filtered.Search(task)
 
-		var executed []string
 		for _, cmd := range searchedList {
 			result, execErr := cmd.Execute(true, "")
 			if execErr != nil && execErr.Level >= common.Error {
 				log.GeneralLogger.Printf("Job [%s] exec failed: [%s]", cmd.GetName(), execErr.Error())
 				if execErr.Level >= common.Critical {
-					executed = append(executed, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), execErr.Error()))
+					executedResults = append(executedResults, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), execErr.Error()))
 				} else {
-					executed = append(executed, execErr.Error())
+					executedResults = append(executedResults, execErr.Error())
 				}
 				continue
 			}
 			if result != "" {
 				cmd.SetDisplayMsg(result)
-				executed = append(executed, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
+				executedResults = append(executedResults, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
 			}
+
 			// exec seccessfully -> update db
-			StoreDb(cmd)
+			if result != "" {
+				cmd.SetDisplayMsg(result)
+				executedResults = append(executedResults, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
+			}
+			executedCmds = append(executedCmds, cmd)
 		}
-		return string(strings.Join(executed, "\n")), nil
 	}
+	if len(executedCmds) != 0 {
+		StoreMultiDb(executedCmds)
+	}
+	return string(strings.Join(executedResults, "\n")), nil
 }
 
 func (c *CommandFactory) List() string {
@@ -230,9 +237,7 @@ func (c *CommandFactory) List() string {
 func (c *CommandFactory) On(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(true)
-		filter := bson.M{"_id": v.GetName()}
-		update := bson.M{"$set": bson.M{"enabled": true}}
-		if err := db.GetDb().Update("commands", filter, update); err != nil {
+		if err := StoreDb(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] on", name)
@@ -243,9 +248,7 @@ func (c *CommandFactory) On(name string) string {
 func (c *CommandFactory) Off(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(false)
-		filter := bson.M{"_id": v.GetName()}
-		update := bson.M{"$set": bson.M{"enabled": false}}
-		if err := db.GetDb().Update("commands", filter, update); err != nil {
+		if err := StoreDb(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] off", name)
@@ -256,9 +259,7 @@ func (c *CommandFactory) Off(name string) string {
 func (c *CommandFactory) SetInterval(name string, interval time.Duration) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetIdleTime(interval)
-		filter := bson.M{"_id": v.GetName()}
-		update := bson.M{"$set": bson.M{"idletime": interval}}
-		if err := db.GetDb().Update("commands", filter, update); err != nil {
+		if err := StoreDb(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] interval: [%v]", name, interval)
