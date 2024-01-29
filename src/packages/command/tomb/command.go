@@ -34,6 +34,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		PkIdx    int64  `json:"pkIdx"`
 		Key      string `json:"key" bson:"key"`
 		SentTx   string `json:"sent_tx" bson:"sent_tx"`
+		Command  string `json:"command"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
@@ -45,6 +46,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		PkIdx:    c.PkIdx,
 		Key:      c.Key,
 		SentTx:   c.SentTx,
+		Command:  fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, c.SentTx),
 	})
 }
 

@@ -57,6 +57,10 @@ type BalanceCommand struct {
 }
 
 func (c BalanceCommand) MarshalJSON() ([]byte, error) {
+	addresses := make([]string, len(c.Wallets))
+	for i, w := range c.Wallets {
+		addresses[i] = w.Address.String()
+	}
 	return json.Marshal(&struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
@@ -64,12 +68,14 @@ func (c BalanceCommand) MarshalJSON() ([]byte, error) {
 		IdleTime string   `json:"idletime"`
 		Rpc      string   `json:"rpc"`
 		Wallets  []Wallet `json:"wallets"`
+		Command  string   `json:"command"`
 	}{
 		Name:     c.Name,
 		Type:     c.Type.String(),
 		IdleTime: c.IdleTime.String(),
 		Rpc:      c.Rpc,
 		Wallets:  c.Wallets,
+		Command:  fmt.Sprintf("add balance %s %s %s", c.Name, c.Rpc, strings.Join(addresses, " ")),
 	})
 }
 

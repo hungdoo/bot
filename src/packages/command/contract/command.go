@@ -41,6 +41,7 @@ func (c ContractCommand) MarshalJSON() ([]byte, error) {
 		ValueIndex int64  `json:"index" bson:"index"`
 		Margin     int64  `json:"margin" bson:"margin"`
 		Precision  int64  `json:"precision" bson:"precision"`
+		Command    string `json:"command"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
@@ -53,6 +54,7 @@ func (c ContractCommand) MarshalJSON() ([]byte, error) {
 		ValueIndex: c.ValueIndex,
 		Margin:     c.Margin,
 		Precision:  c.Precision,
+		Command:    fmt.Sprintf("add call %s %s %s %s %s %d %d %d", c.Name, c.Rpc, c.Contract, c.Method, strings.Join(c.Params, ";"), c.ValueIndex, c.Margin, c.Precision),
 	})
 }
 
