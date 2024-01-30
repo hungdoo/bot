@@ -123,7 +123,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			return err.Error()
 		}
 
-		if err := StoreDb(v); err != nil {
+		if err := StoreDb(newCommand); err != nil {
 			return err.Error()
 		}
 		c.commands[name] = newCommand
