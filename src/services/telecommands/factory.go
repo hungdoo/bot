@@ -63,7 +63,7 @@ type CommandFactory struct {
 }
 
 func NewCommandFactory() CommandFactory {
-	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 3 * time.Hour}
+	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 1 * time.Minute}
 }
 
 func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
