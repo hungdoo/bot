@@ -76,7 +76,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		if err := v.SetData(messages); err != nil {
 			return err.Error()
 		}
-		if err := StoreDb(v); err != nil {
+		if err := UpdateCmd(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] updated", name)
@@ -123,7 +123,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			return err.Error()
 		}
 
-		if err := StoreDb(newCommand); err != nil {
+		if err := StoreCmd(newCommand); err != nil {
 			return err.Error()
 		}
 		c.commands[name] = newCommand
@@ -216,7 +216,7 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 		}
 	}
 	if len(executedCmds) != 0 {
-		StoreMultiDb(executedCmds)
+		UpdateMultiCmd(executedCmds)
 	}
 	return string(strings.Join(executedResults, "\n")), nil
 }
@@ -237,7 +237,7 @@ func (c *CommandFactory) List() string {
 func (c *CommandFactory) On(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(true)
-		if err := StoreDb(v); err != nil {
+		if err := UpdateCmd(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] on", name)
@@ -248,7 +248,7 @@ func (c *CommandFactory) On(name string) string {
 func (c *CommandFactory) Off(name string) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetEnabled(false)
-		if err := StoreDb(v); err != nil {
+		if err := UpdateCmd(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] off", name)
@@ -259,7 +259,7 @@ func (c *CommandFactory) Off(name string) string {
 func (c *CommandFactory) SetInterval(name string, interval time.Duration) string {
 	if v, ok := c.commands[name]; ok {
 		v.SetIdleTime(interval)
-		if err := StoreDb(v); err != nil {
+		if err := UpdateCmd(v); err != nil {
 			return err.Error()
 		}
 		return fmt.Sprintf("Command [%v] interval: [%v]", name, interval)

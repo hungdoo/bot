@@ -241,7 +241,7 @@ func (c *CommandService) Work() {
 					results = append(results, fmt.Sprintf("[%s]\n%s", j.GetName(), result))
 				}
 				// exec seccessfully -> update db
-				StoreDb(j)
+				UpdateCmd(j)
 			}
 		}
 		if len(results) != 0 {

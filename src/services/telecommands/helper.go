@@ -7,7 +7,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func StoreDb(cmd command.ICommand) error {
+func StoreCmd(cmd command.ICommand) error {
+	if err := db.GetDb().Insert("commands", cmd); err != nil {
+		log.GeneralLogger.Printf("Job [%s] insert db failed: [%s]", cmd.GetName(), err)
+		return err
+	}
+	return nil
+}
+
+func UpdateCmd(cmd command.ICommand) error {
 	filter := bson.M{"_id": cmd.GetName()}
 	update := bson.M{"$set": cmd}
 	if err := db.GetDb().Update("commands", filter, update); err != nil {
@@ -17,7 +25,7 @@ func StoreDb(cmd command.ICommand) error {
 	return nil
 }
 
-func StoreMultiDb(cmds []command.ICommand) error {
+func UpdateMultiCmd(cmds []command.ICommand) error {
 	filter := bson.M{}
 	update := bson.M{"$set": cmds}
 	if err := db.GetDb().Update("commands", filter, update); err != nil {
