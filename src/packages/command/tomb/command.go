@@ -99,12 +99,8 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
 		rewards := cli.GetRewards(user)
-		mason := cli.GetUpgradedMasonry()
-		pauseEpoch := cli.GetPauseGameAtEpoch()
-		if pauseEpoch != 0 {
-			return "", common.NewErrorWithSeverity(common.Error, "game not started")
-		}
-		return fmt.Sprintf("cur-last-rewards-pause-mason: %v-%v-%v-%v-%v", currentEpoch, lastVotedEpoch, rewards, pauseEpoch, mason.String()), nil
+
+		return fmt.Sprintf("cur/last--rewards: %v/%v--%v", currentEpoch, lastVotedEpoch, rewards), nil
 
 	case "clear":
 		c.SentTx = ""

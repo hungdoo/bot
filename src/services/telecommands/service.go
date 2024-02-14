@@ -132,7 +132,7 @@ func (s *CommandService) RegisterCommands() {
 					Name: "tomb",
 					Flags: []cli.Flag{
 						cli.StringFlag{Name: "task,t", Required: true},
-						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, clear, claim, cronjob, default", Value: "default"},
+						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, clear, claim, cronjob, default", Value: "stats"},
 					},
 					Action: func(c *cli.Context) error {
 						task := c.String("task")

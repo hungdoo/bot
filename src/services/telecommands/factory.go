@@ -222,10 +222,6 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				}
 				continue
 			}
-			if result != "" {
-				cmd.SetDisplayMsg(result)
-				executedResults = append(executedResults, fmt.Sprintf("[%s]\n%s", cmd.GetName(), result))
-			}
 
 			// exec seccessfully -> update db
 			if result != "" {

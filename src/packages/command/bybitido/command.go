@@ -1,6 +1,8 @@
 package bybitido
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/hungdoo/bot/src/common"
@@ -12,6 +14,20 @@ import (
 type IdoCommand struct {
 	command.Command
 	Id string `bson:"_id,unique"`
+}
+
+func (c IdoCommand) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Name     string `json:"name"`
+		Type     string `json:"type"`
+		IdleTime string `json:"idletime"`
+		Command  string `json:"command"`
+	}{
+		Name:     c.Name,
+		Type:     c.Type.String(),
+		IdleTime: c.IdleTime.String(),
+		Command:  fmt.Sprintf("add bybit %s", c.Name),
+	})
 }
 
 func (c *IdoCommand) Validate(data []string) error {
