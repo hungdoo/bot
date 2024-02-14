@@ -55,6 +55,14 @@ func (s *CommandService) RegisterCommands() {
 						return nil
 					},
 				},
+				{
+					Name:      "bybit",
+					UsageText: "name",
+					Action: func(c *cli.Context) error {
+						fmt.Fprintln(s.Parser.Writer, s.Factory.Add(command.BybitIdo, c.Args()))
+						return nil
+					},
+				},
 			},
 		},
 		{
@@ -121,8 +129,7 @@ func (s *CommandService) RegisterCommands() {
 					},
 				},
 				{
-					Name:      "tomb",
-					UsageText: "name, rpc, contract, up, pkIdx, k",
+					Name: "tomb",
 					Flags: []cli.Flag{
 						cli.StringFlag{Name: "task,t", Required: true},
 						cli.StringFlag{Name: "subcommand,sc", Usage: "stats, clear, claim, cronjob, default", Value: "default"},
@@ -131,6 +138,24 @@ func (s *CommandService) RegisterCommands() {
 						task := c.String("task")
 						subcommand := c.String("subcommand")
 						res, err := s.Factory.Exec(command.Tomb, task, subcommand)
+						if err != nil {
+							fmt.Fprintln(s.Parser.Writer, err.Error())
+							return err
+						}
+						fmt.Fprintln(s.Parser.Writer, res)
+						return nil
+					},
+				},
+				{
+					Name: "bybit",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "task,t", Required: true},
+						cli.StringFlag{Name: "subcommand,sc", Usage: "latest, all, default", Value: "latest"},
+					},
+					Action: func(c *cli.Context) error {
+						task := c.String("task")
+						subcommand := c.String("subcommand")
+						res, err := s.Factory.Exec(command.BybitIdo, task, subcommand)
 						if err != nil {
 							fmt.Fprintln(s.Parser.Writer, err.Error())
 							return err

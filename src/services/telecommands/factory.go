@@ -9,6 +9,7 @@ import (
 
 	"github.com/hungdoo/bot/src/common"
 	"github.com/hungdoo/bot/src/packages/command/balance"
+	"github.com/hungdoo/bot/src/packages/command/bybitido"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/command/contract"
 	"github.com/hungdoo/bot/src/packages/command/tomb"
@@ -67,11 +68,10 @@ func NewCommandFactory() CommandFactory {
 }
 
 func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
-	if len(messages) < 2 {
-		return "Add needs at least 2 params"
+	if len(messages) < 1 {
+		return "Add needs at least 1 params"
 	}
 	name := messages[0]
-	messages = messages[1:]
 	if v, ok := c.commands[name]; ok {
 		if err := v.SetData(messages); err != nil {
 			return err.Error()
@@ -114,12 +114,26 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 					IdleTime: time.Second * 30,
 				},
 			}
+		case command.BybitIdo:
+			newCommand = &bybitido.IdoCommand{
+				Id: name,
+				Command: command.Command{
+					Name:     name,
+					Enabled:  true,
+					Type:     cmdType,
+					IdleTime: time.Hour * 1,
+				},
+			}
 		}
 		if newCommand == nil {
 			return fmt.Sprintf("Command [%v] failed to add", name)
 		}
 
-		if err := newCommand.SetData(messages); err != nil {
+		var data []string
+		if len(messages) > 1 {
+			data = messages[1:]
+		}
+		if err := newCommand.SetData(data); err != nil {
 			return err.Error()
 		}
 
@@ -161,12 +175,15 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 	var executedResults []string
 
 	switch cmdType {
-	case command.Tomb:
+	case command.Tomb, command.BybitIdo:
 		subCmd := ""
 		if len(opts) != 0 {
 			subCmd = opts[0]
 		}
 		searchedList := filtered.Search(task)
+		if len(searchedList) == 0 {
+			return fmt.Sprintf("Task [%v] not found", task), nil
+		}
 
 		for _, cmd := range searchedList {
 			result, execErr := cmd.Execute(true, subCmd)
@@ -190,6 +207,9 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 
 	default:
 		searchedList := filtered.Search(task)
+		if len(searchedList) == 0 {
+			return fmt.Sprintf("Task [%v] not found", task), nil
+		}
 
 		for _, cmd := range searchedList {
 			result, execErr := cmd.Execute(true, "")
@@ -305,6 +325,8 @@ func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
 				iCmd = &tomb.TombCommand{}
 			case command.Balance:
 				iCmd = &balance.BalanceCommand{}
+			case command.BybitIdo:
+				iCmd = &bybitido.IdoCommand{}
 			default:
 				log.GeneralLogger.Printf("unsupported cmd[%+v] ", cmd)
 				continue

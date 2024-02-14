@@ -8,6 +8,7 @@ const (
 	Tomb
 	Debank
 	Balance
+	BybitIdo
 )
 
 func (s CommandType) String() string {
@@ -20,6 +21,8 @@ func (s CommandType) String() string {
 		return "debank"
 	case Balance:
 		return "balance"
+	case BybitIdo:
+		return "BybitIdo"
 	default:
 		return "unknown"
 	}

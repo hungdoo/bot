@@ -25,12 +25,10 @@ func UpdateCmd(cmd command.ICommand) error {
 	return nil
 }
 
-func UpdateMultiCmd(cmds []command.ICommand) error {
-	filter := bson.M{}
-	update := bson.M{"$set": cmds}
-	if err := db.GetDb().Update("commands", filter, update); err != nil {
-		log.GeneralLogger.Printf("Job update many db failed: [%s]", err)
-		return err
+func UpdateMultiCmd(cmds []command.ICommand) {
+	for _, c := range cmds {
+		if err := UpdateCmd(c); err != nil {
+			log.GeneralLogger.Printf("Job [%s] update db failed: [%s]", c.GetName(), err)
+		}
 	}
-	return nil
 }
