@@ -20,6 +20,7 @@ type TombCommand struct {
 	PkIdx           int64  `json:"pkIdx" bson:"pkIdx"`
 	Key             string `json:"key" bson:"key"`
 	SentTx          string `json:"sent_tx" bson:"sent_tx"`
+	LastVotedEpoch  int64  `json:"lastEpoch" bson:"lastEpoch"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
@@ -27,26 +28,28 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Name string `json:"name"`
 		Type string `json:"type"`
 		// Data     []string `json:"data"`
-		IdleTime string `json:"idletime"`
-		Rpc      string `json:"rpc"`
-		Contract string `json:"contract"`
-		Up       bool   `json:"up"`
-		PkIdx    int64  `json:"pkIdx"`
-		Key      string `json:"key" bson:"key"`
-		SentTx   string `json:"sent_tx" bson:"sent_tx"`
-		Command  string `json:"command"`
+		IdleTime       string `json:"idletime"`
+		Rpc            string `json:"rpc"`
+		Contract       string `json:"contract"`
+		Up             bool   `json:"up"`
+		PkIdx          int64  `json:"pkIdx"`
+		Key            string `json:"key" bson:"key"`
+		SentTx         string `json:"sent_tx" bson:"sent_tx"`
+		LastVotedEpoch int64  `json:"lastEpoch"`
+		Command        string `json:"command"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
 		// Data:     c.Data,
-		IdleTime: c.IdleTime.String(),
-		Rpc:      c.Rpc,
-		Contract: c.Contract,
-		Up:       c.Up,
-		PkIdx:    c.PkIdx,
-		Key:      c.Key,
-		SentTx:   c.SentTx,
-		Command:  fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, c.SentTx),
+		IdleTime:       c.IdleTime.String(),
+		Rpc:            c.Rpc,
+		Contract:       c.Contract,
+		Up:             c.Up,
+		PkIdx:          c.PkIdx,
+		Key:            c.Key,
+		SentTx:         c.SentTx,
+		LastVotedEpoch: c.LastVotedEpoch,
+		Command:        fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, c.SentTx),
 	})
 }
 
@@ -128,32 +131,46 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		}
 
 		// Start fresh, no pending tx
-		gameStarted := cli.GameStarted()
-		if !gameStarted {
-			return "", common.NewErrorWithSeverity(common.Error, "game not started")
-		}
+		// gameStarted := cli.GameStarted()
+		// if !gameStarted {
+		// 	return "", common.NewErrorWithSeverity(common.Error, "game not started")
+		// }
 		currentEpoch := cli.CurrentEpoch()
-		lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
-		if err != nil {
-			return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		if c.LastVotedEpoch == 0 {
+			lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
+			if err != nil {
+				return "", common.NewErrorWithSeverity(common.Error, err.Error())
+			}
+			c.LastVotedEpoch = lastVotedEpoch.Int64()
 		}
-		maxFutureFlips := cli.MaxAllowedFutureFlips()
-		if maxFutureFlips <= 0 {
-			return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
-		}
-		if currentEpoch > 0 && currentEpoch == lastVotedEpoch.Int64() {
-			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips-1, c.Up)
+		// maxFutureFlips := cli.MaxAllowedFutureFlips()
+		// if maxFutureFlips <= 0 {
+		// 	return "", common.NewErrorWithSeverity(common.Error, "maxFutureFlips <= 0")
+		// }
+		// Obsolete
+		// if currentEpoch > 0 && currentEpoch == lastVotedEpoch.Int64() {
+		// 	res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips-1, c.Up)
+		// 	if errWithSeverity != nil {
+		// 		return "", errWithSeverity
+		// 	}
+		// 	c.SentTx = res.Hash().String()
+		// 	return fmt.Sprintf("tx[%s] sent", c.SentTx), nil
+		// } else
+		if currentEpoch > 0 && currentEpoch > c.LastVotedEpoch {
+			canFlip, err := cli.CanFlipForCurrentEpoch()
+			if err != nil {
+				return "", common.NewErrorWithSeverity(common.Error, err.Error())
+			}
+			if !canFlip {
+				c.LastVotedEpoch = currentEpoch // skip this epoch
+				return "", common.NewErrorWithSeverity(common.Info, "too late to vote")
+			}
+			res, errWithSeverity := cli.Flip(pk, c.Up)
 			if errWithSeverity != nil {
 				return "", errWithSeverity
 			}
 			c.SentTx = res.Hash().String()
-			return fmt.Sprintf("tx[%s] sent", c.SentTx), nil
-		} else if currentEpoch > lastVotedEpoch.Int64() {
-			res, errWithSeverity := cli.Flipmultiple(pk, maxFutureFlips, c.Up)
-			if errWithSeverity != nil {
-				return "", errWithSeverity
-			}
-			c.SentTx = res.Hash().String()
+			c.LastVotedEpoch = currentEpoch
 			return fmt.Sprintf("tx[%s] sent", c.SentTx), nil
 		}
 		return "", common.NewErrorWithSeverity(common.Info, "already Voted")

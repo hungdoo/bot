@@ -101,7 +101,7 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 					Name:     name,
 					Enabled:  true,
 					Type:     cmdType,
-					IdleTime: time.Minute * 5,
+					IdleTime: time.Minute * 2,
 				},
 			}
 		case command.Balance:

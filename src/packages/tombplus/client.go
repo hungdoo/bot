@@ -86,12 +86,12 @@ func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.
 	return latestEpoch, nil
 }
 
-func (c *TombplusClient) CanFlipForCurrentEpoch() bool {
+func (c *TombplusClient) CanFlipForCurrentEpoch() (bool, error) {
 	ok, err := c.tomb.CanFlipForCurrentEpoch(&bind.CallOpts{})
 	if err != nil {
-		return false
+		return false, err
 	}
-	return ok
+	return ok, nil
 }
 func (c *TombplusClient) CurrentEpoch() int64 {
 	epochNum, err := c.tomb.CurrentEpochId(&bind.CallOpts{})
@@ -136,6 +136,18 @@ func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (*types.Transaction
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
+	return c.dryrunAndSend(noSendOpts.From, signedTx)
+}
+
+func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
+	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
+	if err != nil {
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+	}
+	signedTx, err := c.tomb.Flip(noSendOpts, up)
+	if err != nil {
+		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+	}
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
