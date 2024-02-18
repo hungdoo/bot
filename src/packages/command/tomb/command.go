@@ -96,14 +96,14 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 
 	switch subcommand {
 	case "stats":
-		currentEpoch := cli.CurrentEpoch()
-		lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
-		if err != nil {
-			return "", common.NewErrorWithSeverity(common.Error, err.Error())
-		}
+		// currentEpoch := cli.CurrentEpoch()
+		// lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
+		// if err != nil {
+		// 	return "", common.NewErrorWithSeverity(common.Error, err.Error())
+		// }
 		rewards := cli.GetRewards(user)
 
-		return fmt.Sprintf("cur/last--rewards: %v/%v--%v", currentEpoch, lastVotedEpoch, rewards), nil
+		return fmt.Sprintf("rewards: %v", rewards), nil
 
 	case "clear":
 		c.SentTx = ""
