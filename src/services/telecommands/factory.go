@@ -58,13 +58,11 @@ func (cm *CommandMap) ToActiveList() []command.ICommand {
 // @dev internal facing controller
 // Responsibility: validates, processes commands & handles errors
 type CommandFactory struct {
-	commands          CommandMap
-	lastRefreshedAt   time.Time
-	refreshDbInterval time.Duration
+	commands CommandMap
 }
 
 func NewCommandFactory() CommandFactory {
-	return CommandFactory{commands: map[string]command.ICommand{}, lastRefreshedAt: time.Now(), refreshDbInterval: 1 * time.Minute}
+	return CommandFactory{commands: map[string]command.ICommand{}}
 }
 
 func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) string {
@@ -72,8 +70,12 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 		return "Add needs at least 1 params"
 	}
 	name := messages[0]
+	var data []string
+	if len(messages) > 1 {
+		data = messages[1:]
+	}
 	if v, ok := c.commands[name]; ok {
-		if err := v.SetData(messages); err != nil {
+		if err := v.SetData(data); err != nil {
 			return err.Error()
 		}
 		if err := UpdateCmd(v); err != nil {
@@ -129,10 +131,6 @@ func (c *CommandFactory) Add(cmdType command.CommandType, messages []string) str
 			return fmt.Sprintf("Command [%v] failed to add", name)
 		}
 
-		var data []string
-		if len(messages) > 1 {
-			data = messages[1:]
-		}
 		if err := newCommand.SetData(data); err != nil {
 			return err.Error()
 		}
@@ -284,67 +282,63 @@ func (c *CommandFactory) SetInterval(name string, interval time.Duration) string
 }
 
 func (c *CommandFactory) GetJobs() ([]command.ICommand, error) {
-	if len(c.commands) == 0 || time.Since(c.lastRefreshedAt) >= c.refreshDbInterval {
-		c.lastRefreshedAt = time.Now()
+	cursor, err := db.GetDb().Find("commands", bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
 
-		cursor, err := db.GetDb().Find("commands", bson.D{})
+	for cursor.Next(context.TODO()) {
+		// cmd := command.Command{}
+		var result bson.M
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+
+		// Unmarshal the BSON document into the custom command object
+		// Convert the result map to BSON representation
+		resultBytes, err := bson.Marshal(result)
 		if err != nil {
 			return nil, err
 		}
-		defer cursor.Close(context.TODO())
 
-		for cursor.Next(context.TODO()) {
-			// cmd := command.Command{}
-			var result bson.M
-			if err := cursor.Decode(&result); err != nil {
-				return nil, err
-			}
-
-			// Unmarshal the BSON document into the custom command object
-			// Convert the result map to BSON representation
-			resultBytes, err := bson.Marshal(result)
-			if err != nil {
-				return nil, err
-			}
-
-			cmd := &command.CustomCommand{}
-			err = bson.Unmarshal(resultBytes, cmd)
-			if err != nil {
-				return nil, err
-			}
-
-			var iCmd interface{}
-			switch cmd.Type {
-			case command.ContractCall:
-				iCmd = &contract.ContractCommand{}
-			case command.Tomb:
-				iCmd = &tomb.TombCommand{}
-			case command.Balance:
-				iCmd = &balance.BalanceCommand{}
-			case command.BybitIdo:
-				iCmd = &bybitido.IdoCommand{}
-			default:
-				log.GeneralLogger.Printf("unsupported cmd[%+v] ", cmd)
-				continue
-			}
-			err = bson.Unmarshal(resultBytes, iCmd)
-			if err != nil {
-				return nil, err
-			}
-
-			_command, ok := iCmd.(command.ICommand)
-			if !ok {
-				return nil, fmt.Errorf("cannot typecast cmd[%v] to ICommand", cmd)
-			}
-
-			name := _command.GetName()
-			c.commands[name] = _command
-			b, err := json.MarshalIndent(_command, "", "  ")
-			if err != nil {
-				return nil, fmt.Errorf("cannot MarshalIndent _command[%v]", _command)
-			}
-			log.GeneralLogger.Printf("Loaded Command [%v]\n", string(b))
+		cmd := &command.CustomCommand{}
+		err = bson.Unmarshal(resultBytes, cmd)
+		if err != nil {
+			return nil, err
 		}
+
+		var iCmd interface{}
+		switch cmd.Type {
+		case command.ContractCall:
+			iCmd = &contract.ContractCommand{}
+		case command.Tomb:
+			iCmd = &tomb.TombCommand{}
+		case command.Balance:
+			iCmd = &balance.BalanceCommand{}
+		case command.BybitIdo:
+			iCmd = &bybitido.IdoCommand{}
+		default:
+			log.GeneralLogger.Printf("unsupported cmd[%+v] ", cmd)
+			continue
+		}
+		err = bson.Unmarshal(resultBytes, iCmd)
+		if err != nil {
+			return nil, err
+		}
+
+		_command, ok := iCmd.(command.ICommand)
+		if !ok {
+			return nil, fmt.Errorf("cannot typecast cmd[%v] to ICommand", cmd)
+		}
+
+		name := _command.GetName()
+		c.commands[name] = _command
+		b, err := json.MarshalIndent(_command, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("cannot MarshalIndent _command[%v]", _command)
+		}
+		log.GeneralLogger.Printf("Loaded Command [%v]\n", string(b))
 	}
 
 	return c.commands.ToActiveList(), nil

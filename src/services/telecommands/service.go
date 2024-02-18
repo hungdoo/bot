@@ -278,7 +278,7 @@ func (c *CommandService) Work() {
 			msg.ParseMode = ""
 			telegram.GetBot().Send(msg)
 		}
-		time.Sleep(time.Millisecond * 5000)
+		time.Sleep(time.Second * 30)
 	}
 }
 
