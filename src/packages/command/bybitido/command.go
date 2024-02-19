@@ -45,13 +45,13 @@ func (c *IdoCommand) Execute(mustReport bool, subcommand string) (string, *commo
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
-		return utils.PrettyPrint(latest), nil
+		return fmt.Sprintf("Latest:\n%s", utils.PrettyPrint(latest)), nil
 	case "all":
 		a, err := bybitapi.FetchProjects(bybitapi.IDO_URL)
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
-		return utils.PrettyPrint(a), nil
+		return fmt.Sprintf("All:\n%s", utils.PrettyPrint(a)), nil
 	default:
 		p, err := bybitapi.GetUpcomingProjects(bybitapi.IDO_URL, time.Now())
 		if err != nil {
@@ -59,7 +59,7 @@ func (c *IdoCommand) Execute(mustReport bool, subcommand string) (string, *commo
 		}
 		// Process the results
 		if len(p) != 0 {
-			return utils.PrettyPrint(p), nil
+			return fmt.Sprintf("Upcoming:\n%s", utils.PrettyPrint(p)), nil
 		}
 		return "", nil
 	}

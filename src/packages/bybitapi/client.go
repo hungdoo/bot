@@ -61,7 +61,7 @@ func GetUpcomingProjects(url string, since time.Time) ([]Project, error) {
 
 	var upcomings []Project
 	for _, j := range projects {
-		if since.Before(j.RegistrationStartTime.Time) {
+		if since.Before(j.RegistrationEndTime.Time) {
 			upcomings = append(upcomings, j)
 		}
 	}
@@ -76,7 +76,7 @@ func GetLatestProject(url string) (*Project, error) {
 
 	var latestIdx = int(0)
 	for i := 1; i < len(projects); i++ {
-		if projects[i].RegistrationStartTime.Time.After(projects[latestIdx].RegistrationStartTime.Time) {
+		if projects[i].RegistrationEndTime.Time.After(projects[latestIdx].RegistrationEndTime.Time) {
 			latestIdx = i
 		}
 	}

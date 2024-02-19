@@ -17,7 +17,8 @@ func TestFetchProjects(t *testing.T) {
 }
 
 func TestFetchUpcommingProjects(t *testing.T) {
-	projs, err := GetUpcomingProjects(IDO_URL, time.Unix(1706781600, 0)) // 2024-02-01 10:00:00
+	// projs, err := GetUpcomingProjects(IDO_URL, time.Unix(1706781600, 0)) // 2024-02-01 10:00:00
+	projs, err := GetUpcomingProjects(IDO_URL, time.Now()) // now
 	if err != nil {
 		t.Fatal(err)
 	}
