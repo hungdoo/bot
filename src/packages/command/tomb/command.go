@@ -25,6 +25,7 @@ type TombCommand struct {
 	SentTx           string    `json:"sent_tx" bson:"sent_tx"`
 	CurrentEpoch     int64     `json:"currentEpoch" bson:"currentEpoch"`
 	LastVotedEpoch   int64     `json:"lastEpoch" bson:"lastEpoch"`
+	User             string    `json:"user"`
 	VoteEndTimestamp time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
 }
 
@@ -83,6 +84,16 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 		return err
 	}
 	c.Key = newValue[4]
+
+	pk, err := LoadSecrets(int(c.PkIdx), c.Key)
+	if err != nil {
+		return err
+	}
+	user, err := tombplus.AddressFromPriKey(pk)
+	if err != nil {
+		return err
+	}
+	c.User = user.String()
 	return nil
 }
 
@@ -95,15 +106,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 
 	switch subcommand {
 	case "stats":
-		pk, err := LoadSecrets(int(c.PkIdx), c.Key)
-		if err != nil {
-			return "", common.NewErrorWithSeverity(common.Error, err.Error())
-		}
-		user, err := tombplus.AddressFromPriKey(pk)
-		if err != nil {
-			return "", common.NewErrorWithSeverity(common.Error, err.Error())
-		}
-		rewards := cli.GetRewards(user)
+		rewards := cli.GetRewards(ethCommon.HexToAddress(c.User))
 
 		return fmt.Sprintf("rewards: %v", rewards), nil
 
@@ -137,15 +140,15 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			return fmt.Sprintf("tx[%s] successful", toCheck), nil
 		}
 
-		// if c.LastVotedEpoch == 0 {
-		// 	lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(user)
-		// 	if err != nil {
-		// 		return "", common.NewErrorWithSeverity(common.Error, err.Error())
-		// 	}
-		// 	if lastVotedEpoch.Int64() > 0 {
-		// 		c.LastVotedEpoch = lastVotedEpoch.Int64()
-		// 	}
-		// }
+		if c.LastVotedEpoch == 0 {
+			lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(ethCommon.HexToAddress(c.User))
+			if err != nil {
+				return "", common.NewErrorWithSeverity(common.Error, err.Error())
+			}
+			if lastVotedEpoch.Int64() > 0 {
+				c.LastVotedEpoch = lastVotedEpoch.Int64()
+			}
+		}
 
 		if c.VoteEndTimestamp.IsZero() { // vote end not set
 			c.CurrentEpoch = cli.CurrentEpoch()
