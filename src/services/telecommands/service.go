@@ -245,6 +245,7 @@ func (c *CommandService) Work() {
 		var results []string
 		for _, j := range jobs {
 			if !j.IsIdle() {
+				j.SetError("")
 				result, execErr := j.Execute(false, "")
 				log.GeneralLogger.Printf("[%s] execution: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
@@ -254,7 +255,8 @@ func (c *CommandService) Work() {
 						off := c.Factory.Off(j.GetName())
 						results = append(results, fmt.Sprintf("%v failed with CRIT[%s]: off[%s]", j.GetName(), execErr.Error(), off))
 					} else {
-						results = append(results, fmt.Sprintf("%v failed with [%s:%s]", j.GetName(), execErr.Level, execErr.Error()))
+						j.SetError(execErr.Error()) // log for ls cmd
+						// results = append(results, fmt.Sprintf("%v failed with [%s:%s]", j.GetName(), execErr.Level, execErr.Error()))
 					}
 					continue
 				}

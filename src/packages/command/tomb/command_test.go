@@ -1,16 +1,16 @@
-package test
+package tomb
 
 import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
-	"github.com/hungdoo/bot/src/packages/command/tomb"
 	"github.com/hungdoo/bot/src/packages/tombplus"
 )
 
 func TestLoadSecretFile(t *testing.T) {
-	pk, err := tomb.LoadSecrets(0, "16-byte-key12345")
+	pk, err := LoadSecrets(0, "16-byte-key12345")
 	if err != nil {
 		log.Fatal("LoadSecret error:", err)
 	}
@@ -23,7 +23,7 @@ func TestLoadSecretFile(t *testing.T) {
 		t.Errorf("Not same address")
 	}
 
-	pk, err = tomb.LoadSecrets(1, "16-byte-key12399")
+	pk, err = LoadSecrets(1, "16-byte-key12399")
 	if err != nil {
 		log.Fatal("LoadSecret error:", err)
 	}
@@ -44,7 +44,7 @@ func TestSecret(t *testing.T) {
 
 	for k, s := range plaintextSecrets {
 		// Encrypt the secret
-		encryptedSecret, err := tomb.Encrypt([]byte(s), []byte(k))
+		encryptedSecret, err := Encrypt([]byte(s), []byte(k))
 		if err != nil {
 			log.Fatal("Encryption error:", err)
 		}
@@ -53,7 +53,7 @@ func TestSecret(t *testing.T) {
 		fmt.Println("Encrypted Secret:", encryptedSecret)
 
 		// Decrypt the secret
-		decryptedSecret, err := tomb.Decrypt(encryptedSecret, []byte(k))
+		decryptedSecret, err := Decrypt(encryptedSecret, []byte(k))
 		if err != nil {
 			log.Fatal("Decryption error:", err)
 		}
@@ -61,4 +61,47 @@ func TestSecret(t *testing.T) {
 		// Print the decrypted secret
 		fmt.Println("Decrypted Secret:", string(decryptedSecret))
 	}
+}
+
+func TestTombCommand(t *testing.T) {
+	cmd := TombCommand{
+		Rpc:      "https://rpc.ftm.tools",
+		Contract: "0xA979F47480b4B598bf6a8bFA73aC0B6aEccBa505",
+	}
+
+	// Set time
+	res, err := cmd.Execute(true, "")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(res)
+
+	// Early
+	res, err = cmd.Execute(true, "")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(res)
+
+	// Mock VoteEnd 4m before now -> vote too late
+	cmd.VoteEndTimestamp = time.Now().Add(-4 * time.Minute)
+	res, err = cmd.Execute(true, "")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(res)
+	t.Log("VoteEndTimestamp reset", cmd.VoteEndTimestamp.IsZero())
+	res, err = cmd.Execute(true, "")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(res)
+
+	// Mock VoteEnd 4m after now -> vote window
+	cmd.VoteEndTimestamp = time.Now().Add(4 * time.Minute)
+	res, err = cmd.Execute(true, "")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(res)
 }

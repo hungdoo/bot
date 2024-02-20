@@ -21,7 +21,7 @@ import (
 
 type TombplusClient struct {
 	ec   *ethclient.Client
-	tomb *Tombplus
+	Tomb *Tombplus
 }
 
 var _client *TombplusClient
@@ -42,13 +42,13 @@ func GetClient(rpcEndpoint string, contractAddress ethCommon.Address) (*Tombplus
 	}
 	_client = &TombplusClient{
 		ec:   ec,
-		tomb: tomeplusContract,
+		Tomb: tomeplusContract,
 	}
 	return _client, nil
 }
 
 func (c *TombplusClient) MaxAllowedFutureFlips() int64 {
-	val, err := c.tomb.MaxAllowedFutureFlips(&bind.CallOpts{})
+	val, err := c.Tomb.MaxAllowedFutureFlips(&bind.CallOpts{})
 	if err != nil {
 		return -1
 	}
@@ -56,7 +56,7 @@ func (c *TombplusClient) MaxAllowedFutureFlips() int64 {
 }
 
 func (c *TombplusClient) GameStarted() bool {
-	val, err := c.tomb.GameStarted(&bind.CallOpts{})
+	val, err := c.Tomb.GameStarted(&bind.CallOpts{})
 	if err != nil {
 		return false
 	}
@@ -64,7 +64,7 @@ func (c *TombplusClient) GameStarted() bool {
 }
 
 func (c *TombplusClient) GetRewards(user ethCommon.Address) decimal.Decimal {
-	reward, err := c.tomb.RewardBalance(&bind.CallOpts{}, user)
+	reward, err := c.Tomb.RewardBalance(&bind.CallOpts{}, user)
 	if err != nil {
 		return decimal.Zero
 	}
@@ -72,7 +72,7 @@ func (c *TombplusClient) GetRewards(user ethCommon.Address) decimal.Decimal {
 }
 
 func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.Int, error) {
-	flips, err := c.tomb.GetUserFlips(&bind.CallOpts{}, user)
+	flips, err := c.Tomb.GetUserFlips(&bind.CallOpts{}, user)
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +87,14 @@ func (c *TombplusClient) GetUserLastedVoteEpochId(user ethCommon.Address) (*big.
 }
 
 func (c *TombplusClient) CanFlipForCurrentEpoch() (bool, error) {
-	ok, err := c.tomb.CanFlipForCurrentEpoch(&bind.CallOpts{})
+	ok, err := c.Tomb.CanFlipForCurrentEpoch(&bind.CallOpts{})
 	if err != nil {
 		return false, err
 	}
 	return ok, nil
 }
 func (c *TombplusClient) CurrentEpoch() int64 {
-	epochNum, err := c.tomb.CurrentEpochId(&bind.CallOpts{})
+	epochNum, err := c.Tomb.CurrentEpochId(&bind.CallOpts{})
 	if err != nil {
 		return -1
 	}
@@ -102,7 +102,7 @@ func (c *TombplusClient) CurrentEpoch() int64 {
 }
 
 func (c *TombplusClient) GetPauseGameAtEpoch() int64 {
-	val, err := c.tomb.PauseGameAtEpoch(&bind.CallOpts{})
+	val, err := c.Tomb.PauseGameAtEpoch(&bind.CallOpts{})
 	if err != nil {
 		return 0
 	}
@@ -110,7 +110,7 @@ func (c *TombplusClient) GetPauseGameAtEpoch() int64 {
 }
 
 func (c *TombplusClient) GetUpgradedMasonry() ethCommon.Address {
-	val, err := c.tomb.UpgradedMasonry(&bind.CallOpts{})
+	val, err := c.Tomb.UpgradedMasonry(&bind.CallOpts{})
 	if err != nil {
 		return ethCommon.Address{}
 	}
@@ -118,7 +118,7 @@ func (c *TombplusClient) GetUpgradedMasonry() ethCommon.Address {
 }
 
 func (c *TombplusClient) IsVotedAtEpoch(user ethCommon.Address, epoch int64) (bool, error) {
-	val, err := c.tomb.GetUserFlipIdByEpochId(&bind.CallOpts{}, user, big.NewInt(epoch))
+	val, err := c.Tomb.GetUserFlipIdByEpochId(&bind.CallOpts{}, user, big.NewInt(epoch))
 	if err != nil {
 		return false, err
 	}
@@ -131,7 +131,7 @@ func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (*types.Transaction
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
 
-	signedTx, err := c.tomb.Claim(noSendOpts)
+	signedTx, err := c.Tomb.Claim(noSendOpts)
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
@@ -144,7 +144,7 @@ func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, up bool) (*types.Tra
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
-	signedTx, err := c.tomb.Flip(noSendOpts, up)
+	signedTx, err := c.Tomb.Flip(noSendOpts, up)
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
@@ -162,7 +162,7 @@ func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64
 		ups[i] = up
 	}
 
-	signedTx, err := c.tomb.FlipMultiple(noSendOpts, ups)
+	signedTx, err := c.Tomb.FlipMultiple(noSendOpts, ups)
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}

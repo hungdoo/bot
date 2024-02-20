@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -73,6 +74,15 @@ func TestClaim(t *testing.T) {
 	}
 
 	t.Log(tx) // forge debug <txhash>
+}
+
+func TestViewCalls_VoteData(t *testing.T) {
+
+	data, err := tombplusCli.Tomb.UpcomingEpochData(&bind.CallOpts{}, big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("data: %+v", data)
 }
 
 func TestViewCalls(t *testing.T) {
