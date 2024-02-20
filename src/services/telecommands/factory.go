@@ -190,7 +190,7 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 				if execErr.Level >= common.Critical {
 					executedResults = append(executedResults, fmt.Sprintf("%v with reason %s", c.Off(cmd.GetName()), execErr.Error()))
 				} else {
-					executedResults = append(executedResults, execErr.Error())
+					executedResults = append(executedResults, fmt.Sprintf("%v failed with [%s:%s]", cmd.GetName(), execErr.Level, execErr.Error()))
 				}
 				continue
 			}

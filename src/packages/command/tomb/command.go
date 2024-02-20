@@ -49,7 +49,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Key:            c.Key,
 		SentTx:         c.SentTx,
 		LastVotedEpoch: c.LastVotedEpoch,
-		Command:        fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, c.SentTx),
+		Command:        fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
 	})
 }
 
@@ -117,7 +117,6 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		// c.SentTx = res.Hash().String() // no need to record claim tx
 		return res.Hash().String(), nil
 
-	case "cronjob":
 	default:
 		if len(c.SentTx) != 0 {
 			toCheck := c.SentTx
@@ -141,7 +140,9 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 			if err != nil {
 				return "", common.NewErrorWithSeverity(common.Error, err.Error())
 			}
-			c.LastVotedEpoch = lastVotedEpoch.Int64()
+			if lastVotedEpoch.Int64() > 0 {
+				c.LastVotedEpoch = lastVotedEpoch.Int64()
+			}
 		}
 		// maxFutureFlips := cli.MaxAllowedFutureFlips()
 		// if maxFutureFlips <= 0 {
@@ -175,5 +176,4 @@ func (c *TombCommand) Execute(_ bool, subcommand string) (string, *common.ErrorW
 		}
 		return "", common.NewErrorWithSeverity(common.Info, "already Voted")
 	}
-	return "", common.NewErrorWithSeverity(common.Info, "no action")
 }

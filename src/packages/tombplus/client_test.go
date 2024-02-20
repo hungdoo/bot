@@ -31,7 +31,7 @@ func setup() {
 	privateKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" // get from anvil pub 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 	// rpcEndpoint := "http://localhost:8545" // anvil
 	rpcEndpoint := "https://rpc.ftm.tools"
-	contractAddress := common.HexToAddress("0x45b7304fe1542b440b4c61ea04958cefbcec1089") // MasonryPlus: broadcast/TombPlusDeployment.s.sol/250/run-latest.json
+	contractAddress := common.HexToAddress("0xA979F47480b4B598bf6a8bFA73aC0B6aEccBa505") // MasonryPlus: broadcast/TombPlusDeployment.s.sol/250/run-latest.json
 
 	var err error
 	pk, err = PrivateKeyFromHex(privateKeyHex)
@@ -88,4 +88,9 @@ func TestViewCalls(t *testing.T) {
 	}
 	t.Logf("GetUserLastedVoteEpochId: %v", latestEpoch)
 
+	canFlip, err := tombplusCli.CanFlipForCurrentEpoch()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("canFlip: %v", canFlip)
 }
