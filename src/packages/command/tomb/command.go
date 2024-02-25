@@ -24,7 +24,6 @@ type TombCommand struct {
 	Key              string    `json:"key" bson:"key"`
 	SentTx           string    `json:"sent_tx" bson:"sent_tx"`
 	CurrentEpoch     int64     `json:"currentEpoch" bson:"currentEpoch"`
-	LastVotedEpoch   int64     `json:"lastEpoch" bson:"lastEpoch"`
 	User             string    `json:"user"`
 	VoteEndTimestamp time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
 }
@@ -41,7 +40,6 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		PkIdx            int64  `json:"pkIdx"`
 		Key              string `json:"key" bson:"key"`
 		SentTx           string `json:"sent_tx" bson:"sent_tx"`
-		LastVotedEpoch   int64  `json:"lastEpoch"`
 		VoteEndTimestamp string `json:"voteEndTimestamp"`
 		Command          string `json:"command"`
 	}{
@@ -55,7 +53,6 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		PkIdx:            c.PkIdx,
 		Key:              c.Key,
 		SentTx:           c.SentTx,
-		LastVotedEpoch:   c.LastVotedEpoch,
 		VoteEndTimestamp: c.VoteEndTimestamp.String(),
 		Command:          fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
 	})
@@ -135,25 +132,18 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			}
 			// tx successful, clear sent tx hash
 			c.SentTx = ""
-			c.LastVotedEpoch = c.CurrentEpoch
 			c.VoteEndTimestamp = time.Time{}
 			return fmt.Sprintf("tx[%s] successful", toCheck), nil
 		}
 
-		if c.LastVotedEpoch == 0 {
+		if c.VoteEndTimestamp.IsZero() { // vote end not set
+			c.CurrentEpoch = cli.CurrentEpoch()
 			lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(ethCommon.HexToAddress(c.User))
 			if err != nil {
 				return "", common.NewErrorWithSeverity(common.Error, err.Error())
 			}
-			if lastVotedEpoch.Int64() > 0 {
-				c.LastVotedEpoch = lastVotedEpoch.Int64()
-			}
-		}
 
-		if c.VoteEndTimestamp.IsZero() { // vote end not set
-			c.CurrentEpoch = cli.CurrentEpoch()
-
-			if c.CurrentEpoch > 0 && c.CurrentEpoch > c.LastVotedEpoch {
+			if c.CurrentEpoch > 0 && c.CurrentEpoch > lastVotedEpoch.Int64() {
 				timestamps, err := cli.Tomb.GetEpochObservationTimestamps(&bind.CallOpts{}, big.NewInt(c.CurrentEpoch))
 				if err != nil {
 					return "", common.NewErrorWithSeverity(common.Info, err.Error())
@@ -163,7 +153,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			}
 
 			if mustReport {
-				return fmt.Sprintf("already voted currentEpoch[%v]/last[%v]", c.CurrentEpoch, c.LastVotedEpoch), nil
+				return fmt.Sprintf("already voted currentEpoch[%v]/last[%v]", c.CurrentEpoch, lastVotedEpoch), nil
 			}
 			return "", nil
 
