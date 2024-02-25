@@ -41,6 +41,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Key              string `json:"key" bson:"key"`
 		SentTx           string `json:"sent_tx" bson:"sent_tx"`
 		VoteEndTimestamp string `json:"voteEndTimestamp"`
+		User             string `json:"user"`
 		Command          string `json:"command"`
 	}{
 		Name: c.Name,
@@ -53,6 +54,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		PkIdx:            c.PkIdx,
 		Key:              c.Key,
 		SentTx:           c.SentTx,
+		User:             c.User,
 		VoteEndTimestamp: c.VoteEndTimestamp.String(),
 		Command:          fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
 	})
@@ -103,6 +105,9 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 
 	switch subcommand {
 	case "stats":
+		if len(c.User) == 0 {
+			return "", common.NewErrorWithSeverity(common.Error, "cannot get stats of empty user address")
+		}
 		rewards := cli.GetRewards(ethCommon.HexToAddress(c.User))
 
 		return fmt.Sprintf("rewards: %v", rewards), nil
@@ -138,6 +143,9 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 
 		if c.VoteEndTimestamp.IsZero() { // vote end not set
 			c.CurrentEpoch = cli.CurrentEpoch()
+			if len(c.User) == 0 {
+				return "", common.NewErrorWithSeverity(common.Critical, "cannot get stats of empty user address")
+			}
 			lastVotedEpoch, err := cli.GetUserLastedVoteEpochId(ethCommon.HexToAddress(c.User))
 			if err != nil {
 				return "", common.NewErrorWithSeverity(common.Error, err.Error())
