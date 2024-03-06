@@ -165,7 +165,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			}
 			return "", nil
 
-		} else if c.VoteEndTimestamp.After(time.Now()) && time.Until(c.VoteEndTimestamp) < 5*time.Minute { // 5min before vote end
+		} else if c.VoteEndTimestamp.After(time.Now()) && time.Until(c.VoteEndTimestamp) < 20*time.Minute { // 10min before vote end
 			// determine vote side up/down
 			data, err := cli.Tomb.UpcomingEpochData(&bind.CallOpts{}, big.NewInt(c.CurrentEpoch))
 			if err != nil {
