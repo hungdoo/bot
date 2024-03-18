@@ -140,6 +140,8 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			}
 			// tx successful, clear sent tx hash
 			c.SentTx = ""
+			c.VoteEndTimestamp = time.Time{}
+
 			return fmt.Sprintf("tx[%s] successful", toCheck), nil
 		}
 
