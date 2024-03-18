@@ -235,7 +235,7 @@ func (c *CommandFactory) Exec(cmdType command.CommandType, task string, opts ...
 	return string(strings.Join(executedResults, "\n")), nil
 }
 
-func (c *CommandFactory) List() string {
+func (c *CommandFactory) List(showAll bool) string {
 	enabledCMD := []string{}
 	disabledCMD := []string{}
 	for _, cmd := range c.commands {
@@ -245,7 +245,12 @@ func (c *CommandFactory) List() string {
 			disabledCMD = append(disabledCMD, fmt.Sprintf("[-] %v", cmd.GetOverview()))
 		}
 	}
-	return strings.Join(append(append(enabledCMD, ""), disabledCMD...), "\n")
+
+	if showAll {
+		return strings.Join(append(append(enabledCMD, ""), disabledCMD...), "\n")
+	} else {
+		return strings.Join(enabledCMD, "\n")
+	}
 }
 
 func (c *CommandFactory) On(name string) string {

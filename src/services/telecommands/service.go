@@ -169,9 +169,13 @@ func (s *CommandService) RegisterCommands() {
 		{
 			Name:    "list",
 			Aliases: []string{"ls"},
-			Usage:   "list tasks",
+			Flags: []cli.Flag{
+				cli.BoolFlag{Name: "all,a", Usage: "show all"},
+			},
+			Usage: "list tasks",
 			Action: func(c *cli.Context) error {
-				fmt.Fprintln(s.Parser.Writer, s.Factory.List())
+				showAll := c.Bool("all")
+				fmt.Fprintln(s.Parser.Writer, s.Factory.List(showAll))
 				return nil
 			},
 		},

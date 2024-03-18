@@ -15,17 +15,18 @@ import (
 )
 
 type TombCommand struct {
-	command.Command  `json:"command" bson:"command"`
-	Id               string    `json:"-" bson:"_id,unique"`
-	Rpc              string    `json:"rpc" bson:"rpc"`
-	Contract         string    `json:"contract" bson:"contract"`
-	Up               bool      `json:"up" bson:"up"`
-	PkIdx            int64     `json:"pkIdx" bson:"pkIdx"`
-	Key              string    `json:"key" bson:"key"`
-	SentTx           string    `json:"sent_tx" bson:"sent_tx"`
-	CurrentEpoch     int64     `json:"currentEpoch" bson:"currentEpoch"`
-	User             string    `json:"user"`
-	VoteEndTimestamp time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
+	command.Command    `json:"command" bson:"command"`
+	Id                 string    `json:"-" bson:"_id,unique"`
+	Rpc                string    `json:"rpc" bson:"rpc"`
+	Contract           string    `json:"contract" bson:"contract"`
+	Up                 bool      `json:"up" bson:"up"`
+	PkIdx              int64     `json:"pkIdx" bson:"pkIdx"`
+	Key                string    `json:"key" bson:"key"`
+	SentTx             string    `json:"sent_tx" bson:"sent_tx"`
+	CurrentEpoch       int64     `json:"currentEpoch" bson:"currentEpoch"`
+	User               string    `json:"user"`
+	VoteEndTimestamp   time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
+	NextEpochTimestamp time.Time `json:"nextEpochTimestamp" bson:"nextEpochTimestamp"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
@@ -33,30 +34,32 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		Name string `json:"name"`
 		Type string `json:"type"`
 		// Data     []string `json:"data"`
-		IdleTime         string `json:"idletime"`
-		Rpc              string `json:"rpc"`
-		Contract         string `json:"contract"`
-		Up               bool   `json:"up"`
-		PkIdx            int64  `json:"pkIdx"`
-		Key              string `json:"key" bson:"key"`
-		SentTx           string `json:"sent_tx" bson:"sent_tx"`
-		VoteEndTimestamp string `json:"voteEndTimestamp"`
-		User             string `json:"user"`
-		Command          string `json:"command"`
+		IdleTime           string `json:"idletime"`
+		Rpc                string `json:"rpc"`
+		Contract           string `json:"contract"`
+		Up                 bool   `json:"up"`
+		PkIdx              int64  `json:"pkIdx"`
+		Key                string `json:"key" bson:"key"`
+		SentTx             string `json:"sent_tx" bson:"sent_tx"`
+		VoteEndTimestamp   string `json:"voteEndTimestamp"`
+		NextEpochTimestamp string `json:"nextEpochTimestamp"`
+		User               string `json:"user"`
+		Command            string `json:"command"`
 	}{
 		Name: c.Name,
 		Type: c.Type.String(),
 		// Data:     c.Data,
-		IdleTime:         c.IdleTime.String(),
-		Rpc:              c.Rpc,
-		Contract:         c.Contract,
-		Up:               c.Up,
-		PkIdx:            c.PkIdx,
-		Key:              c.Key,
-		SentTx:           c.SentTx,
-		User:             c.User,
-		VoteEndTimestamp: c.VoteEndTimestamp.String(),
-		Command:          fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
+		IdleTime:           c.IdleTime.String(),
+		Rpc:                c.Rpc,
+		Contract:           c.Contract,
+		Up:                 c.Up,
+		PkIdx:              c.PkIdx,
+		Key:                c.Key,
+		SentTx:             c.SentTx,
+		User:               c.User,
+		VoteEndTimestamp:   c.VoteEndTimestamp.String(),
+		NextEpochTimestamp: c.NextEpochTimestamp.String(),
+		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
 	})
 }
 
@@ -137,11 +140,10 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			}
 			// tx successful, clear sent tx hash
 			c.SentTx = ""
-			c.VoteEndTimestamp = time.Time{}
 			return fmt.Sprintf("tx[%s] successful", toCheck), nil
 		}
 
-		if c.VoteEndTimestamp.IsZero() { // vote end not set
+		if c.VoteEndTimestamp.IsZero() && c.NextEpochTimestamp.IsZero() { // new epoch setup
 			c.CurrentEpoch = cli.CurrentEpoch()
 			if len(c.User) == 0 {
 				return "", common.NewErrorWithSeverity(common.Critical, "cannot get stats of empty user address")
@@ -156,15 +158,21 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 				if err != nil {
 					return "", common.NewErrorWithSeverity(common.Info, err.Error())
 				}
-				c.VoteEndTimestamp = time.Unix(timestamps.ObservationStartTimestamp.Int64(), 0)
-				return fmt.Sprintf("vote end timestamp set to %s", c.VoteEndTimestamp.String()), nil
-			}
 
+				nextVoteEndTimestamp := time.Unix(timestamps.ObservationStartTimestamp.Int64(), 0)
+				nextEpochTimestamp := time.Unix(timestamps.ObservationEndTimestamp.Int64(), 0)
+				c.NextEpochTimestamp = nextEpochTimestamp
+				if nextVoteEndTimestamp.After(time.Now()) {
+					c.VoteEndTimestamp = nextVoteEndTimestamp
+					return fmt.Sprintf("vote end timestamp set to %s", c.VoteEndTimestamp.String()), nil
+				} else {
+					return fmt.Sprintf("missed this epoch. Wait till %s", c.NextEpochTimestamp.String()), nil
+				}
+			}
 			if mustReport {
 				return fmt.Sprintf("already voted currentEpoch[%v]/last[%v]", c.CurrentEpoch, lastVotedEpoch), nil
 			}
 			return "", nil
-
 		} else if c.VoteEndTimestamp.After(time.Now()) && time.Until(c.VoteEndTimestamp) < 1*time.Hour {
 			// determine vote side up/down
 			data, err := cli.Tomb.UpcomingEpochData(&bind.CallOpts{}, big.NewInt(c.CurrentEpoch))
@@ -192,14 +200,20 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			c.SentTx = res.Hash().String()
 
 			return fmt.Sprintf("tx[%s] sent. Voted Up:%v. Data: %+v", c.SentTx, up, data), nil
-		} else if c.VoteEndTimestamp.Before(time.Now()) {
+		} else if c.VoteEndTimestamp.Before(time.Now()) && c.NextEpochTimestamp.After(time.Now()) {
+			if mustReport {
+				return "vote ended", nil
+			}
+			return "", nil
+		} else if c.NextEpochTimestamp.Before(time.Now()) {
 			c.VoteEndTimestamp = time.Time{}
-			return "too late", nil
+			c.NextEpochTimestamp = time.Time{}
+			return "new epoch started", nil
+		} else {
+			if mustReport {
+				return fmt.Sprintf("too early till vote end. %vm left", time.Until(c.VoteEndTimestamp).Minutes()), nil
+			}
+			return "", nil
 		}
-
-		if mustReport {
-			return fmt.Sprintf("too early till vote end. %vm left", time.Until(c.VoteEndTimestamp).Minutes()), nil
-		}
-		return "", nil
 	}
 }
