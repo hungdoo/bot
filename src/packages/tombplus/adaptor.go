@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/params"
 )
 
 var _contract *Tombplus
@@ -26,7 +25,7 @@ func GetTombplusContract(ec *ethclient.Client, contractAdr common.Address) (*Tom
 	return _contract, nil
 }
 
-func NewAuthorizedTransactor(ec *ethclient.Client, privateKeyECDSA *ecdsa.PrivateKey, gaslimit uint64, value *big.Int) (*bind.TransactOpts, error) {
+func NewAuthorizedTransactor(ec *ethclient.Client, privateKeyECDSA *ecdsa.PrivateKey, gaslimit uint64, maxGas *big.Int, value *big.Int) (*bind.TransactOpts, error) {
 	ctx := context.Background()
 	fromAddress, err := AddressFromPriKey(privateKeyECDSA)
 	if err != nil {
@@ -47,8 +46,7 @@ func NewAuthorizedTransactor(ec *ethclient.Client, privateKeyECDSA *ecdsa.Privat
 		return nil, fmt.Errorf("failed to get gasPrice: %w", err)
 	}
 	// gasPrice = min(gasPrice, maxGas)
-	maxGas := big.NewInt(100 * params.GWei)
-	if gasPrice.Cmp(maxGas) >= 1 { // ftm gas > maxGas
+	if maxGas == nil || gasPrice.Cmp(maxGas) >= 1 { // maxGas is nil (user oracle price) or ftm gas > maxGas
 		gasPrice = maxGas
 	}
 	signerFn := func(address common.Address, transaction *types.Transaction) (*types.Transaction, error) {

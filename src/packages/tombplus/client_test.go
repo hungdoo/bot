@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 var pk *ecdsa.PrivateKey
@@ -51,7 +52,14 @@ func teardown() {
 }
 
 func TestNewAuthorizedTransactor(t *testing.T) {
-	opts, err := NewAuthorizedTransactor(tombplusCli.ec, pk, 0, big.NewInt(0))
+	opts, err := NewAuthorizedTransactor(tombplusCli.ec, pk, 0, nil, big.NewInt(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(opts.GasPrice)
+
+	opts, err = NewAuthorizedTransactor(tombplusCli.ec, pk, 0, new(big.Int).Mul(common.Big1, big.NewInt(params.GWei)), big.NewInt(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +67,7 @@ func TestNewAuthorizedTransactor(t *testing.T) {
 	t.Log(opts.GasPrice)
 }
 func TestFlipmultiple(t *testing.T) {
-	tx, err := tombplusCli.Flipmultiple(pk, 8, true)
+	tx, err := tombplusCli.Flipmultiple(pk, nil, 8, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +76,7 @@ func TestFlipmultiple(t *testing.T) {
 }
 
 func TestClaim(t *testing.T) {
-	tx, err := tombplusCli.Claim(pk)
+	tx, err := tombplusCli.Claim(pk, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

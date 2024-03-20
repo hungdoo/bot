@@ -125,8 +125,8 @@ func (c *TombplusClient) IsVotedAtEpoch(user ethCommon.Address, epoch int64) (bo
 	return val.Found, nil
 }
 
-func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (*types.Transaction, *common.ErrorWithSeverity) {
-	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
+func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey, maxGas *big.Int) (*types.Transaction, *common.ErrorWithSeverity) {
+	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, maxGas, big.NewInt(0))
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
@@ -139,8 +139,8 @@ func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey) (*types.Transaction
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
-func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
-	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
+func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, maxGas *big.Int, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
+	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, maxGas, big.NewInt(0))
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}
@@ -151,8 +151,8 @@ func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, up bool) (*types.Tra
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
 
-func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, epochs int64, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
-	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, big.NewInt(0))
+func (c *TombplusClient) Flipmultiple(privateKey *ecdsa.PrivateKey, maxGas *big.Int, epochs int64, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
+	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, maxGas, big.NewInt(0))
 	if err != nil {
 		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
 	}

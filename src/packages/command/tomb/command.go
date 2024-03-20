@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/hungdoo/bot/src/common"
 	command "github.com/hungdoo/bot/src/packages/command/common"
 	"github.com/hungdoo/bot/src/packages/tombplus"
@@ -27,6 +28,7 @@ type TombCommand struct {
 	User               string    `json:"user"`
 	VoteEndTimestamp   time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
 	NextEpochTimestamp time.Time `json:"nextEpochTimestamp" bson:"nextEpochTimestamp"`
+	MaxGas             *big.Int  `json:"maxGas" bson:"maxGas"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
@@ -59,13 +61,13 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		User:               c.User,
 		VoteEndTimestamp:   c.VoteEndTimestamp.String(),
 		NextEpochTimestamp: c.NextEpochTimestamp.String(),
-		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key),
+		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, new(big.Int).Div(c.MaxGas, big.NewInt(params.GWei))),
 	})
 }
 
 func (c *TombCommand) Validate(data []string) error { // rpc, contract, up, pkIdx, k
-	if len(data) < 5 {
-		return fmt.Errorf("invalid params: rpc, contract, up, pkIdx, k")
+	if len(data) < 6 {
+		return fmt.Errorf("invalid params: rpc, contract, up, pkIdx, k, maxGas[Gwei]")
 	}
 	return nil
 }
@@ -96,6 +98,12 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 		return err
 	}
 	c.User = user.String()
+
+	newMaxGas, err := strconv.ParseInt(newValue[5], 10, 64)
+	if err != nil {
+		return err
+	}
+	c.MaxGas = new(big.Int).Mul(big.NewInt(newMaxGas), big.NewInt(params.GWei))
 	return nil
 }
 
@@ -124,7 +132,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 		if err != nil {
 			return "", common.NewErrorWithSeverity(common.Error, err.Error())
 		}
-		res, err2 := cli.Claim(pk)
+		res, err2 := cli.Claim(pk, nil) // nil: use oracle gasPrice
 		if err2 != nil {
 			return "", err2
 		}
@@ -191,7 +199,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			if err != nil {
 				return "", common.NewErrorWithSeverity(common.Error, err.Error())
 			}
-			res, errWithSeverity := cli.Flip(pk, up)
+			res, errWithSeverity := cli.Flip(pk, c.MaxGas, up)
 			if errWithSeverity != nil {
 				return "", errWithSeverity
 			}
