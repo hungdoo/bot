@@ -164,12 +164,8 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 				nextVoteEndTimestamp := time.Unix(timestamps.ObservationStartTimestamp.Int64(), 0)
 				nextEpochTimestamp := time.Unix(timestamps.ObservationEndTimestamp.Int64(), 0)
 				c.NextEpochTimestamp = nextEpochTimestamp
-				if nextVoteEndTimestamp.After(time.Now()) {
-					c.VoteEndTimestamp = nextVoteEndTimestamp
-					return fmt.Sprintf("vote end timestamp set to %s", c.VoteEndTimestamp.String()), nil
-				} else {
-					return fmt.Sprintf("missed this epoch. Wait till %s", c.NextEpochTimestamp.String()), nil
-				}
+				c.VoteEndTimestamp = nextVoteEndTimestamp
+				return fmt.Sprintf("vote end timestamp set to %s", c.VoteEndTimestamp.String()), nil
 			}
 			if mustReport {
 				return fmt.Sprintf("already voted currentEpoch[%v]/last[%v]", c.CurrentEpoch, lastVotedEpoch), nil
