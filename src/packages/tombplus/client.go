@@ -142,11 +142,11 @@ func (c *TombplusClient) Claim(privateKey *ecdsa.PrivateKey, maxGas *big.Int) (*
 func (c *TombplusClient) Flip(privateKey *ecdsa.PrivateKey, maxGas *big.Int, up bool) (*types.Transaction, *common.ErrorWithSeverity) {
 	noSendOpts, err := NewAuthorizedTransactor(c.ec, privateKey, 0, maxGas, big.NewInt(0))
 	if err != nil {
-		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Critical, err.Error())
 	}
 	signedTx, err := c.Tomb.Flip(noSendOpts, up)
 	if err != nil {
-		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Critical, err.Error())
 	}
 	return c.dryrunAndSend(noSendOpts.From, signedTx)
 }
@@ -202,14 +202,13 @@ func (c *TombplusClient) dryrunAndSend(fromAddress ethCommon.Address, signedTx *
 		Data:     signedTx.Data(),
 	}, nil)
 	if err != nil {
-		// tx will revert, no need to send
-		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Critical, err.Error())
 	}
 
 	err = c.ec.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		// rpc error
-		return nil, common.NewErrorWithSeverity(common.Error, err.Error())
+		return nil, common.NewErrorWithSeverity(common.Critical, err.Error())
 	}
 	return signedTx, nil
 }
