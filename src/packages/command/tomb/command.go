@@ -32,6 +32,10 @@ type TombCommand struct {
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
+	var maxGasDisplay string
+	if c.MaxGas != nil {
+		maxGasDisplay = new(big.Int).Div(c.MaxGas, big.NewInt(params.GWei)).String()
+	}
 	return json.Marshal(&struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
@@ -61,7 +65,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		User:               c.User,
 		VoteEndTimestamp:   c.VoteEndTimestamp.String(),
 		NextEpochTimestamp: c.NextEpochTimestamp.String(),
-		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, new(big.Int).Div(c.MaxGas, big.NewInt(params.GWei))),
+		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, maxGasDisplay),
 	})
 }
 
