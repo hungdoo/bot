@@ -232,15 +232,17 @@ func (s *CommandService) RegisterCommands() {
 }
 
 func (c *CommandService) process(message string) string {
-	var ret string
-	messages := strings.Split(strings.TrimSpace(message), " ")
-	err := c.Parser.Run(append([]string{"tele"}, messages...))
-	ret = cmdparser.GetOutput()
+	// Refresh jobs
+	_, err := c.Factory.GetJobs()
 	if err != nil {
-		ret = fmt.Sprintf("%v[err:%v]", ret, err)
+		return fmt.Sprintf("GetJobs err: [%s]", err)
 	}
-	log.GeneralLogger.Printf("Process message[%s] & ret[%s]\n", message, ret)
-	return ret
+
+	messages := strings.Split(strings.TrimSpace(message), " ")
+	if err = c.Parser.Run(append([]string{"tele"}, messages...)); err != nil {
+		return fmt.Sprintf("Parser run err: %s", err)
+	}
+	return cmdparser.GetOutput()
 }
 
 // Work all commands in intervals
