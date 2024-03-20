@@ -28,14 +28,10 @@ type TombCommand struct {
 	User               string    `json:"user"`
 	VoteEndTimestamp   time.Time `json:"voteEndTimestamp" bson:"voteEndTimestamp"`
 	NextEpochTimestamp time.Time `json:"nextEpochTimestamp" bson:"nextEpochTimestamp"`
-	MaxGas             *big.Int  `json:"maxGas" bson:"maxGas"`
+	MaxGas             int64     `json:"maxGas" bson:"maxGas"`
 }
 
 func (c TombCommand) MarshalJSON() ([]byte, error) {
-	var maxGasDisplay string
-	if c.MaxGas != nil {
-		maxGasDisplay = new(big.Int).Div(c.MaxGas, big.NewInt(params.GWei)).String()
-	}
 	return json.Marshal(&struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
@@ -65,7 +61,7 @@ func (c TombCommand) MarshalJSON() ([]byte, error) {
 		User:               c.User,
 		VoteEndTimestamp:   c.VoteEndTimestamp.String(),
 		NextEpochTimestamp: c.NextEpochTimestamp.String(),
-		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, maxGasDisplay),
+		Command:            fmt.Sprintf("add tomb %s %s %s %v %v %v %v", c.Name, c.Rpc, c.Contract, c.Up, c.PkIdx, c.Key, c.MaxGas),
 	})
 }
 
@@ -107,7 +103,7 @@ func (c *TombCommand) SetData(newValue []string) (err error) {
 	if err != nil {
 		return err
 	}
-	c.MaxGas = new(big.Int).Mul(big.NewInt(newMaxGas), big.NewInt(params.GWei))
+	c.MaxGas = newMaxGas
 	return nil
 }
 
@@ -203,7 +199,7 @@ func (c *TombCommand) Execute(mustReport bool, subcommand string) (string, *comm
 			if err != nil {
 				return "", common.NewErrorWithSeverity(common.Error, err.Error())
 			}
-			res, errWithSeverity := cli.Flip(pk, c.MaxGas, up)
+			res, errWithSeverity := cli.Flip(pk, new(big.Int).Mul(big.NewInt(c.MaxGas), big.NewInt(params.GWei)), up)
 			if errWithSeverity != nil {
 				return "", errWithSeverity
 			}
