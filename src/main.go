@@ -14,6 +14,11 @@ func main() {
 
 	commandService := telecommands.NewService()
 	commandService.RegisterCommands()
-	go commandService.Work()
-	commandService.ListenToCommand()
+
+	if dotenv.GetEnv("SERVICE_MODE") == "listener" {
+		go commandService.Work()
+		commandService.ListenToCommand()
+	} else {
+		commandService.Work()
+	}
 }
