@@ -16,7 +16,7 @@ func main() {
 	commandService.RegisterCommands()
 
 	if dotenv.GetEnv("SERVICE_MODE") == "listener" {
-		go commandService.Work()
+		// go commandService.Work()
 		commandService.ListenToCommand()
 	} else {
 		commandService.Work()
