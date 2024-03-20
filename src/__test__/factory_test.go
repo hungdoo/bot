@@ -40,14 +40,14 @@ func TestFactoryGetJobs(t *testing.T) {
 }
 func TestCommandMap(t *testing.T) {
 	m := telecommands.CommandMap{
-		"a": &contract.Command{
+		"a": &contract.ContractCommand{
 			Command: command.Command{
 				Name:     "name_111",
 				Enabled:  true,
 				IdleTime: time.Second * 60,
 			},
 		},
-		"b": &contract.Command{
+		"b": &contract.ContractCommand{
 			Command: command.Command{
 				Name:     "name_222",
 				Enabled:  false,

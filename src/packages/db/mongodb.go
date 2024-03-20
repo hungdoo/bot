@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/hungdoo/bot/src/packages/dotenv"
 	"github.com/hungdoo/bot/src/packages/log"
@@ -12,27 +13,37 @@ import (
 var _db *MongoDB
 
 type MongoDB struct {
-	Client *mongo.Client
+	IsTestEnv bool
+	Client    *mongo.Client
 }
 
 func newMongoDB() (*MongoDB, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 	// Set client options
 	clientOptions := options.Client().ApplyURI("mongodb://" + dotenv.GetEnv("DBHost") + ":" + dotenv.GetEnv("DBPort"))
 
 	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check the connection
-	err = client.Ping(context.TODO(), nil)
+	err = client.Ping(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	log.GeneralLogger.Printf("MongoDB Connected to: %s\n", clientOptions.GetURI())
-	return &MongoDB{Client: client}, nil
+
+	var isTestEnv bool
+	env := dotenv.GetEnv("DBEnv")
+	if env == "test" {
+		isTestEnv = true
+	}
+
+	return &MongoDB{Client: client, IsTestEnv: isTestEnv}, nil
 }
 
 func (db *MongoDB) Close() {

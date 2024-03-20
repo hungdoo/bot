@@ -1,6 +1,7 @@
 package telecommands
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -9,10 +10,12 @@ import (
 	"github.com/hungdoo/bot/src/common"
 	"github.com/hungdoo/bot/src/packages/cmdparser"
 	command "github.com/hungdoo/bot/src/packages/command/common"
+	"github.com/hungdoo/bot/src/packages/db"
 	"github.com/hungdoo/bot/src/packages/interfaces"
 	"github.com/hungdoo/bot/src/packages/log"
 	"github.com/hungdoo/bot/src/packages/telegram"
 	"github.com/hungdoo/bot/src/packages/utils"
+	lock "github.com/square/mongo-lock"
 	"github.com/urfave/cli"
 )
 
@@ -22,6 +25,7 @@ type CommandService struct {
 	interfaces.IService
 	Factory CommandFactory
 	Parser  *cli.App
+	LockCli *lock.Client
 }
 
 func (s *CommandService) RegisterCommands() {
@@ -248,8 +252,16 @@ func (c *CommandService) Work() {
 		}
 		var results []string
 		for _, j := range jobs {
+			// Create an exclusive lock on a resource.
+			lockId := "mutexLock" + j.GetName()
+			err = c.LockCli.XLock(context.Background(), j.GetName(), lockId, lock.LockDetails{})
+			if err != nil {
+				log.GeneralLogger.Printf("Job [%s] XLock err: [%s]", j.GetName(), err.Error())
+				j.SetError(err.Error())
+				continue
+			}
+
 			if !j.IsIdle() {
-				j.SetError("")
 				result, execErr := j.Execute(false, "")
 				log.GeneralLogger.Printf("[%s] execution: [%s]", j.GetName(), result)
 				j.SetExecutedTime(time.Now())
@@ -262,7 +274,6 @@ func (c *CommandService) Work() {
 						j.SetError(execErr.Error()) // log for ls cmd
 						// results = append(results, fmt.Sprintf("%v failed with [%s:%s]", j.GetName(), execErr.Level, execErr.Error()))
 					}
-					continue
 				}
 
 				// record result & info error for logging with tele.List cmd, no realtime report
@@ -273,7 +284,16 @@ func (c *CommandService) Work() {
 				// exec seccessfully -> update db
 				UpdateCmd(j)
 			}
+
+			// Unlock the resource
+			_, err = c.LockCli.Unlock(context.Background(), lockId)
+			if err != nil {
+				log.GeneralLogger.Printf("XLock Unlock err: [%s]", err)
+				results = append(results, fmt.Sprintf("%v XLock Unlock failed with [%s]", j.GetName(), err))
+			}
+			log.GeneralLogger.Printf("[%s] XLock Release successfully", j.GetName())
 		}
+
 		if len(results) != 0 {
 			reportChatId, err := telegram.GetReportChatId()
 			if err != nil {
@@ -331,5 +351,16 @@ func NewService() *CommandService {
 	// 	log.ErrorLogger.Fatal(err)
 	// }
 
-	return &CommandService{Factory: NewCommandFactory(), Parser: parser}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	collection := db.GetDb().GetCollection("commands_lock")
+
+	// Create a MongoDB lock client.
+	cli := lock.NewClient(collection)
+
+	// Create the required and recommended indexes.
+	cli.CreateIndexes(ctx)
+
+	return &CommandService{Factory: NewCommandFactory(), Parser: parser, LockCli: cli}
 }

@@ -65,8 +65,12 @@ func TestSecret(t *testing.T) {
 
 func TestTombCommand(t *testing.T) {
 	cmd := TombCommand{
-		Rpc:      "https://rpc.ftm.tools",
+		Rpc:      "https://rpc3.fantom.network",
 		Contract: "0xA979F47480b4B598bf6a8bFA73aC0B6aEccBa505",
+		Up:       true,
+		PkIdx:    1,
+		Key:      "aaa",
+		User:     "0xA979F47480b4B598bf6a8bFA73aC0B6aEccBa505",
 	}
 
 	// Set time
@@ -74,14 +78,14 @@ func TestTombCommand(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(res)
+	t.Logf("set time: %v\nTimestamps: %v/%v", res, cmd.VoteEndTimestamp, cmd.NextEpochTimestamp)
 
 	// Early
 	res, err = cmd.Execute(true, "")
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(res)
+	t.Logf("early: %v", res)
 
 	// Mock VoteEnd 4m before now -> vote too late
 	cmd.VoteEndTimestamp = time.Now().Add(-4 * time.Minute)
@@ -89,13 +93,7 @@ func TestTombCommand(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(res)
-	t.Log("VoteEndTimestamp reset", cmd.VoteEndTimestamp.IsZero())
-	res, err = cmd.Execute(true, "")
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(res)
+	t.Logf("VoteEnd 4m before now: %v", res)
 
 	// Mock VoteEnd 4m after now -> vote window
 	cmd.VoteEndTimestamp = time.Now().Add(4 * time.Minute)
@@ -103,5 +101,5 @@ func TestTombCommand(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(res)
+	t.Logf("VoteEnd 4m after now: %v", res)
 }
