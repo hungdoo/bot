@@ -256,7 +256,7 @@ func (c *CommandService) Work() {
 		for _, j := range jobs {
 			// Create an exclusive lock on a resource.
 			lockId := "mutexLock" + j.GetName()
-			err = c.LockCli.XLock(context.Background(), j.GetName(), lockId, lock.LockDetails{})
+			err = c.LockCli.XLock(context.Background(), j.GetName(), lockId, lock.LockDetails{TTL: 60 * 5}) // lock expires in 5min
 			if err != nil {
 				log.GeneralLogger.Printf("Job [%s] XLock err: [%s]", j.GetName(), err.Error())
 				j.SetError(err.Error())
